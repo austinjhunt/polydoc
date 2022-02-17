@@ -46,7 +46,7 @@ class DriveAPI:
                 self.creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'app/credentials.json', SCOPES,
+                    'credentials.json', SCOPES,
                     redirect_uri="http://localhost:8000/hello")
                 #self.creds = flow.credentials.to_json()
                 self.creds = flow.run_local_server(port=50005)
