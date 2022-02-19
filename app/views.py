@@ -28,10 +28,18 @@ def index(request):
 import requests
 from mimetypes import MimeTypes
 from .utils import DriveAPI
-
-
-from django.shortcuts import redirect
+from django.shortcuts import redirect,render
 from django.http import HttpResponse, FileResponse
+from django.views.generic import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class HomeView(View):
+	def get(self, request): 
+		return render(
+			request, 
+			template_name='index.html', 
+			context={}
+		)
 
 
 def display_document(request):
