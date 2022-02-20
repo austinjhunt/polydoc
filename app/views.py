@@ -105,6 +105,7 @@ class ProfileView(LoginRequiredMixin, FormView):
 				'user_document_containers': user_document_containers,
 				'user_documents': Document.objects.filter(user=request.user)}
 		)
+		
 	def form_valid(self, form):
 		## Called after POSTED data has been validated
 		files = form.files # MultiValueDict with key "files"
