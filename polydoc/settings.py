@@ -99,8 +99,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
-]
-
+]  
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -119,6 +118,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = f'{BASE_DIR}/staticfiles'
+MEDIA_ROOT = f'{BASE_DIR}/media'
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',

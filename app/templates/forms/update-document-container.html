@@ -1,0 +1,11 @@
+{% extends 'master.html' %}
+{% block content %}
+<div class="container pt-5">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input hidden disabled name="objectid" value="{{object.id}}">
+        <input type="submit" class="btn btn-md btn-dark" value="Create Document Container">
+    </form>
+</div>
+{% endblock %}

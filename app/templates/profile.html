@@ -1,0 +1,89 @@
+{% extends 'master.html' %}
+{% block content %}
+<div class="container pt-5">
+    <h1>Welcome to your profile, {{user.username}}</h1>
+    <h2>Use this page to upload and download your documents.</h2>
+    <hr />
+    <div class="row">
+        <div class="col-sm-12 col-md-6">
+            <div class="rounded border-1 border p-4">
+                <div class="col-sm-12 row">
+                    <div class="col-sm-8">
+                        <p class="d-inline">Your document containers</p>
+                    </div>
+                    <div class="col-sm-4 text-end">
+                        <div class="d-inline text-end mb-3">
+                            <a class="btn btn-md btn-success" href="{% url 'document-container-create' %}">
+                                <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-box "></i> Add Container
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+                {% for dc in user_document_containers %}
+                <div class="card" style="width: 18rem;">
+                    <div class="card-header">
+                        <div class="text-end">
+                            <a href="{% url 'document-container-update' dc.id %}" class="btn btn-success btn-sm"
+                                title="update document container">
+                                Edit <i class="fa fa-edit"></i>
+                            </a>
+                            <a href="{% url 'document-container-delete' dc.id %}" class="btn btn-danger btn-sm"
+                                title="update document container">
+                                Delete <i class="fa fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ dc.name }}</h5>
+                        <p class="card-text">Documents: {{dc.doc_count}}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-sm-12 col-md-6">
+            <div class="rounded border-1 border p-4">
+                <div class="col-sm-12 row">
+                    <div class="col-sm-8">
+                        <p class="d-inline">Your documents</p>
+                    </div>
+                    <div class="col-sm-4 text-end">
+                        <div class="d-inline text-end mb-3">
+                            <a class="btn btn-md btn-success" href="{% url 'document-create' %}">
+                                <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-file"></i> Add Docs
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+
+                <div class="row my-1">
+                    {% for doc in user_documents %}
+                    <div class="col-sm-12 col-md-6">
+                        <div class="card" style="width: 18rem;">
+                            <div class="card-header">{{doc.title}}</div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    Contained in: {% for container in doc.containers.all %}
+                                    <span class="rounded bg-warning text-dark p-1">{{container.name}}</span>
+                                    {% endfor %}
+                                </p>
+                                <a href="{{doc.location}}" class="btn btn-primary btn-sm">View Document</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+</div>
+{% endblock %}

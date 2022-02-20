@@ -1,0 +1,32 @@
+{% extends 'master.html' %}
+{% block content %}
+<div class="container pt-5">
+    <h1>Add your documents here</h1>
+    <hr />
+    {% if user_document_containers %}
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <p><b>Select the container(s) to which your new documents will belong. One or more containers is
+                    required.</b></p>
+            <ul class="list-group">
+                {% for dc in user_document_containers %}
+                <li class="list-group-item">
+                    <input type="checkbox" name="document_container_id-{{dc.id}}" id="checkbox-{{dc.id}}">
+                    <label for="checkbox-{{dc.id}}">{{dc.name}}</label>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="mb-3">
+            <label for="id_file" class="form-label">Upload one or more files</label>
+            <input type="file" multiple name="file" class="form-control" required id="id_file">
+        </div>
+        <button type="submit" class="btn btn-md btn-dark">Upload Files</button>
+    </form>
+    {% else %}
+    <p class="alert alert-warning p-3">Please create at least one document container in order to upload
+        documents</p>
+    {% endif %}
+</div>
+{% endblock %}

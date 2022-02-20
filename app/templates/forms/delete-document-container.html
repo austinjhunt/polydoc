@@ -1,0 +1,25 @@
+{% extends 'master.html' %}
+{% block content %}
+<div class="container pt-5">
+
+    <form method="post">
+        {% csrf_token %}
+        <p class="alert alert-danger p-3">Confirm Deletion!</p>
+        <p>Are you sure you wish to delete the document container {{object.name}}?</p>
+
+        {% if related_docs %}
+        <p>Deleting this container will delete the following documents (inside the container)</p>
+        <ul class="list-group">
+            {% for doc in related_docs %}
+            <li class="list-group-item">{{doc.title}}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>There are no documents in this container.</p>
+        {% endif %}
+        <div class="text-center my-2">
+            <input type="submit" class="btn btn-md btn-danger" value="Delete Document Container">
+        </div>
+    </form>
+</div>
+{% endblock %}
