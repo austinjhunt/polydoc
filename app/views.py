@@ -1,31 +1,4 @@
-'''
-from django.shortcuts import render
-from pptx import Presentation
-
-
-# Create your views here.
-from django.http import HttpResponse
-
-def index(request):
-	prs = Presentation('app/test.pptx')
-	for slide in prs.slides:
-		for shape in slide.shapes:
-			if shape.has_text_frame:
-				return HttpResponse(shape.text)
-	return HttpResponse("No titles")
-	''
-	slides = prs.slides
-	slide = slides[0]
-	res = slide.title
-	#return HttpResponse(slide.name)
-	if res != None:
-		return HttpResponse(res)
-	else:
-		return HttpResponse("No response")
-	''
-''' 
-from http.client import HTTPResponse
-from .models import DocumentContainer, Document
+from .models import DocumentContainer, Document, Page
 from .utils import DriveAPI
 from .forms import DocumentUploadForm, UserLoginForm, UserCreateForm, DocumentContainerForm
 from django.shortcuts import redirect,render 
@@ -33,8 +6,10 @@ from django.http import FileResponse, Http404
 from django.views.generic import View, FormView, CreateView, UpdateView, DeleteView
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.views import LoginView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.conf import settings 
+from django.contrib.auth.mixins import LoginRequiredMixin 
+from pdf2image import convert_from_path
+from django.conf import settings
+import os 
 
 class HomeView(View):
 	def get(self, request): 
@@ -181,7 +156,15 @@ class DocumentContainerDeleteView(LoginRequiredMixin, DeleteView):
 		doc_container = DocumentContainer.objects.get(id=pk)
 		if not doc_container.user == request.user:
 			raise Http404
-		Document.objects.filter(containers__in=[doc_container]).delete()
+		related_docs = Document.objects.filter(containers__in=[doc_container])
+		for doc in related_docs: 
+			relative_path = doc.location 
+			full_path = relative_path.replace('/media', settings.MEDIA_ROOT)
+			try:
+				os.remove(full_path)
+			except: 
+				pass 
+			doc.delete()
 		doc_container.delete()
 		return redirect('profile')
 
@@ -203,18 +186,20 @@ class DocumentCreateView(LoginRequiredMixin, View):
 		] 
 		files = request.FILES # MultiValueDict with 'file' key
 		files = files.getlist('file') # list of <InMemoryUploadedFile>
-		save_to_path = f'{settings.MEDIA_ROOT}/documents/{request.user.username}'
-		print(save_to_path)
-		print(files)
-		for f in files: 
-			print(f) 
-			clean_filename = f.__dict__['_name'].replace(' ','-').strip().lower()
-			
-			print(clean_filename)
+		# Will be used to serve on front end. 
+		relative_folder_path = f'/media/documents/{request.user.username}'  
+		full_folder_path = f'{settings.MEDIA_ROOT}/documents/{request.user.username}'  
+		for f in files:  
+			_fname = f.__dict__['_name']
+			if len(_fname) > 15: 
+				# Shorten filename if longer than 15 chars. Otherwise it causes problems.
+				_extension = _fname.split('.')[-1]
+				_fname = f'{_fname[:15]}.{_extension}'
+			clean_filename = _fname.replace(' ','-').strip().lower()	
 			new_doc = Document(
 				notes='',
 				title=clean_filename,
-				location=f'{save_to_path}/{clean_filename}',
+				location=f'{relative_folder_path}/{clean_filename}',
 				user=request.user, 
 			)
 			new_doc.file.save(clean_filename, f.file)
@@ -222,9 +207,27 @@ class DocumentCreateView(LoginRequiredMixin, View):
 			for container_id in document_containers:
 				new_doc.containers.add(DocumentContainer.objects.get(id=container_id))
 			new_doc.save()
+
+			# now, create an image for each page of the document
+			document_full_path = f'{full_folder_path}/{clean_filename}'
+			# create a sibling folder with same name as document minus the extension 
+			pages_images_output_folder = f'{full_folder_path}/{clean_filename.split(".")[0]}'	 
+			# pages = convert_from_path(document_full_path, dpi=300, output_folder=pages_images_output_folder)
+			for index, image in enumerate(convert_from_path(document_full_path, dpi=300, fmt="jpg")):
+				print(image)
+				print(image.__dict__)
+				new_page = Page( 
+					document=new_doc, 
+					index=index,
+					notes=''
+				)
+				new_page.save()
+				print(f'Saving image {index}.jpg')
+				new_page.image.save(f'{index}.jpg', image.fp)
+
+			 
 		return redirect('profile')
 		
-
 class DocumentUpdateView(LoginRequiredMixin, CreateView):
 	def get(self, request): 
 		pass
@@ -232,6 +235,7 @@ class DocumentUpdateView(LoginRequiredMixin, CreateView):
 class DocumentDeleteView(LoginRequiredMixin, CreateView):
 	def get(self, request): 
 		pass
+ 
 
 def display_document(request):
     # Use credentials for whatever

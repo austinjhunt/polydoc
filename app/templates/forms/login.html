@@ -1,12 +1,15 @@
 {% extends 'master.html' %}
 {% block content %}
-<div class="container text-center">
-    <h2>Log In</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Log In</button>
-    </form>
-</div>
+<div class="container p-5 text-center">
+    <div class="card" style="width: 18rem; margin:0 auto;">
+        <div class="card-body">
+            <h5 class="card-title">Log In</h5>
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary btn-md">Log In</button>
+            </form>
+        </div>
+    </div>
 
-{% endblock %}
+    {% endblock %}

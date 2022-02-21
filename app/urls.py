@@ -1,5 +1,7 @@
 
-from django.urls import include, path
+from django.urls import path
+from django.conf import settings 
+from django.conf.urls.static import static
 from . import views  
 urlpatterns = [
     path('', views.HomeView.as_view(), name='home'),
@@ -19,4 +21,4 @@ urlpatterns = [
     path('document/update/<slug:pk>', views.DocumentUpdateView.as_view(), name='document-update'),
     path('document/delete/<slug:pk>', views.DocumentDeleteView.as_view(), name='document-delete'),
     path('display_document', views.display_document)
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

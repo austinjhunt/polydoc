@@ -1,0 +1,11 @@
+body.light-theme {
+  background-color: white;
+  .navbar {
+    background-color: $medium-cyan;
+  }
+
+  .footer-wrapper {
+    background-color: white;
+    color: $dark-cyan;
+  }
+}

@@ -36,3 +36,14 @@ python manage.py runserver
 ```
 
 6. The application should now be running on port 8000 of localhost. Try opening [http://localhost:8000](http://localhost:8000) in a browser.
+
+## Notes
+
+- Needed to set multiple buildpacks on Heroku to get the PDF2Image library to work. It depends on Poppler, which must be installed and in PATH. Executed the following from Heroku CLI for the library to work in Production.
+
+```
+heroku buildpacks:set heroku/python --app poly-doc
+heroku buildpacks:add --index 1 https://github.com/survantjames/heroku-buildpack-poppler.git --app poly-doc
+```
+
+- For dev, just needed to install Poppler, e.g. in Ubuntu `sudo apt install poppler-utils`

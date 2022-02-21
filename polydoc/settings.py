@@ -118,6 +118,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = f'{BASE_DIR}/staticfiles'
+MEDIA_URL = 'media/'
 MEDIA_ROOT = f'{BASE_DIR}/media'
 
 STATICFILES_FINDERS = (
@@ -136,6 +137,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Only use heroku configuration if application currently running on heroku
 if 'APPLICATION_ON_HEROKU' in os.environ:
-    # Configure Django App for Heroku.
+    # Configure Django App for Heroku. 
     import django_heroku
     django_heroku.settings(locals()) 

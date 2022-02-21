@@ -1,1 +1,8 @@
+@import "./includes/colors";
 @import "./includes/nav";
+@import "./themes/dark";
+@import "./themes/light";
+
+body {
+  transition: 0.3s linear;
+}

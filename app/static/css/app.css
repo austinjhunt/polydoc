@@ -2,3 +2,29 @@
   background-color: #005272;
   color: white;
 }
+
+body.dark-theme {
+  background-color: #003551;
+}
+body.dark-theme .navbar {
+  background-color: black;
+}
+body.dark-theme .footer-wrapper {
+  background-color: black;
+  color: white;
+}
+
+body.light-theme {
+  background-color: white;
+}
+body.light-theme .navbar {
+  background-color: #005272;
+}
+body.light-theme .footer-wrapper {
+  background-color: white;
+  color: #003551;
+}
+
+body {
+  transition: 0.3s linear;
+}
