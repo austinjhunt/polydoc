@@ -39,11 +39,13 @@ python manage.py runserver
 
 ## Notes
 
-- Needed to set multiple buildpacks on Heroku to get the PDF2Image library to work. It depends on Poppler, which must be installed and in PATH. Executed the following from Heroku CLI for the library to work in Production.
+- Needed to set multiple buildpacks on Heroku to get the PDF2Image library to work. It depends on Poppler, which must be installed and in PATH. Executed the following from Heroku CLI for the library to work in Production. [Documented here](https://stackoverflow.com/questions/63413122/error-while-trying-to-use-pdf2image-on-heroku-libpng12-so-0-cannot-open-share)
 
 ```
 heroku buildpacks:set heroku/python --app poly-doc
-heroku buildpacks:add --index 1 https://github.com/survantjames/heroku-buildpack-poppler.git --app poly-doc
+heroku buildpacks:add --index 1 heroku-community/apt --app poly-doc
+heroku buildpacks:add --index 1 https://github.com/heroku/heroku-buildpack-apt --app poly-doc
 ```
 
+- Then needed to add an Aptfile to root containing `popplerutils` and `libpng-dev`
 - For dev, just needed to install Poppler, e.g. in Ubuntu `sudo apt install poppler-utils`
