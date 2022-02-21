@@ -5,6 +5,7 @@
 
 body.dark-theme {
   background-color: #003551;
+  color: white;
 }
 body.dark-theme .navbar {
   background-color: black;

@@ -20,5 +20,9 @@ urlpatterns = [
     path('document/create', views.DocumentCreateView.as_view(), name='document-create'),
     path('document/update/<slug:pk>', views.DocumentUpdateView.as_view(), name='document-update'),
     path('document/delete/<slug:pk>', views.DocumentDeleteView.as_view(), name='document-delete'),
-    path('display_document', views.display_document)
+    path('display_document', views.display_document),
+
+    # utility
+    # POST endpoint requires trailing slash for ajax call 
+    path('toggle-theme/', views.ToggleThemeView.as_view(), name='toggle-theme')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

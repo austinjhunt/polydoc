@@ -2,7 +2,7 @@ from .models import DocumentContainer, Document, Page
 from .utils import DriveAPI
 from .forms import DocumentUploadForm, UserLoginForm, UserCreateForm, DocumentContainerForm
 from django.shortcuts import redirect,render 
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.views.generic import View, FormView, CreateView, UpdateView, DeleteView
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.views import LoginView
@@ -54,10 +54,9 @@ class LoginView(FormView):
 			return super(LoginView, self).dispatch(request, *args, **kwargs)
 
 	def form_valid(self,form):
-		user = form.save()
 		user = authenticate(
-			username=self.request.POST['username'],
-			password=self.request.POST['password']
+			username=form.cleaned_data['username'],
+			password=form.cleaned_data['password']
 			)
 		login(self.request, user)
 		return super(LoginView,self).form_valid(form)
@@ -257,3 +256,8 @@ def display_document(request):
     except FileNotFoundError:
         raise Http404()
 
+class ToggleThemeView(View):
+	def post(self, request):
+		import json
+		request.session['theme'] = json.loads(request.body.decode())['current_theme']
+		return JsonResponse({'result': f'session updated to use theme {request.session["theme"]}'})
