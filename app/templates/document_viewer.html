@@ -1,0 +1,16 @@
+{% extends 'master.html' %}
+{% block content %}
+<div class="container pt-5">
+    <h1>Displaying document {{document.title}}</h1>
+    <hr />
+    {% for page in document_pages %}
+    <div class="row">
+        <div class="col-lg-10">
+        	<img src="{{page.image.url}}" alt="Page {{page.index}}" width="80%" height="auto">
+        </div>
+	    <hr />
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

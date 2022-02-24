@@ -3,7 +3,7 @@ from .utils import DriveAPI
 from .forms import DocumentUploadForm, UserLoginForm, UserCreateForm, DocumentContainerForm
 from django.shortcuts import redirect,render 
 from django.http import FileResponse, Http404, JsonResponse
-from django.views.generic import View, FormView, CreateView, UpdateView, DeleteView
+from django.views.generic import View, FormView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin 
@@ -257,8 +257,26 @@ class DocumentUpdateView(LoginRequiredMixin, CreateView):
 class DocumentDeleteView(LoginRequiredMixin, CreateView):
 	def get(self, request): 
 		pass
- 
 
+class DocumentPagesView(LoginRequiredMixin, DetailView):
+	model = Page
+	template_name = 'document_viewer.html'
+
+	def get(self, request, pk): 
+		document = Document.objects.filter(id=pk).first()
+		print(f"Document: {document.title}")
+		pages = Page.objects.filter(document=document)
+		print(f"Pages: len: {len(pages)}")
+		return render(
+			request, 
+			template_name=self.template_name,
+			context={
+				'document': document,
+				'document_pages': pages
+			} 
+		)
+
+'''
 def display_document(request):
     # Use credentials for whatever
     obj = DriveAPI()
@@ -278,7 +296,7 @@ def display_document(request):
         return FileResponse(open(f_name, 'rb'), content_type='application/pdf')
     except FileNotFoundError:
         raise Http404()
-
+'''
 class ToggleThemeView(View):
 	def post(self, request):
 		import json

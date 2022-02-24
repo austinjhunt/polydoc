@@ -70,6 +70,7 @@
                                     {% endfor %}
                                 </p>
                                 <a href="{{doc.location}}" class="btn btn-primary btn-sm">View Document</a>
+                                <a href="{% url 'document-pages' doc.id %}" class="btn btn-primary btn-sm">View Pages</a>
                             </div>
                         </div>
                     </div>
