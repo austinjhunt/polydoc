@@ -26,37 +26,57 @@
     function multiviewPreviousPage() {
         let firstDocument = document.querySelectorAll('.multiview-document')[0];
         let currentPageIndex = firstDocument.dataset.currentpage;
+
         console.log(`Hiding pages with index = ${currentPageIndex}`)
-        document.querySelectorAll('.multiview-page').forEach(
-            page => {
-                if (page.dataset.pageindex == currentPageIndex) {
-                    page.classList.add('d-none');
+        if (parseInt(currentPageIndex) - 1 >= 1) {
+            document.querySelectorAll('.multiview-page').forEach(
+                page => {
+                    if (page.dataset.pageindex == currentPageIndex) {
+                        page.classList.add('d-none');
+                    }
+                    else if (page.dataset.pageindex == (parseInt(currentPageIndex) - 1).toString()) {
+                        page.classList.remove('d-none');
+                    }
                 }
-                else if (page.dataset.pageindex == (parseInt(currentPageIndex) - 1).toString()) {
-                    page.classList.remove('d-none');
-                }
-            }
-        )
-        currentPageIndex = Math.max(0, parseInt(currentPageIndex) - 1);
-        console.log(currentPageIndex);
-        firstDocument.dataset.currentpage = currentPageIndex.toString();
+            )
+            currentPageIndex = Math.max(1, parseInt(currentPageIndex) - 1);
+            firstDocument.dataset.currentpage = currentPageIndex.toString();
+        }
+
     }
     function multiviewNextPage() {
         let firstDocument = document.querySelectorAll('.multiview-document')[0];
         let currentPageIndex = firstDocument.dataset.currentpage;
         let maxPages = firstDocument.querySelectorAll('.multiview-page').length;
-        document.querySelectorAll('.multiview-page').forEach(
-            page => {
-                if (page.dataset.pageindex == currentPageIndex) {
-                    page.classList.add('d-none');
+        console.log(`Hiding pages with index = ${currentPageIndex}`)
+        if (parseInt(currentPageIndex) + 1 <= maxPages) {
+            document.querySelectorAll('.multiview-page').forEach(
+                page => {
+                    if (page.dataset.pageindex == currentPageIndex) {
+                        page.classList.add('d-none');
+                    }
+                    else if (page.dataset.pageindex == (parseInt(currentPageIndex) + 1).toString()) {
+                        page.classList.remove('d-none');
+                    }
                 }
-                else if (page.dataset.pageindex == (parseInt(currentPageIndex) + 1).toString()) {
-                    page.classList.remove('d-none');
-                }
-            }
-        )
-        currentPageIndex = Math.min(maxPages, parseInt(currentPageIndex) + 1);
-        firstDocument.dataset.currentpage = currentPageIndex.toString();
+            )
+            currentPageIndex = Math.min(maxPages, parseInt(currentPageIndex) + 1);
+            firstDocument.dataset.currentpage = currentPageIndex.toString();
+        }
+    }
+
+    document.onkeydown = navigate;
+    function navigate(e) {
+        e = e || window.event;
+        if (e.keyCode == '37') {
+            // left arrow
+            multiviewPreviousPage();
+        }
+        else if (e.keyCode == '39') {
+            // right arrow
+            multiviewNextPage();
+        }
+
     }
 </script>
 {% endblock %}
