@@ -3,6 +3,7 @@ from django.urls import path
 from django.conf import settings 
 from django.conf.urls.static import static
 from . import views  
+ 
 urlpatterns = [
     path('', views.HomeView.as_view(), name='home'),
     
@@ -22,7 +23,16 @@ urlpatterns = [
     path('document/delete/<slug:pk>', views.DocumentDeleteView.as_view(), name='document-delete'),
     path('display_document', views.display_document),
 
+    # Multiview functionality 
+    path('multiview/<slug:container_id>', views.MultiView.as_view(), name='multiview'),
     # utility
     # POST endpoint requires trailing slash for ajax call 
     path('toggle-theme/', views.ToggleThemeView.as_view(), name='toggle-theme')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+# def fake(request):
+#     return "fake"
+# urlpatterns = [
+#     path('', fake, name='fake')
+# ]

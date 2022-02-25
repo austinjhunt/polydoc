@@ -1,5 +1,7 @@
+from re import template
 from .models import DocumentContainer, Document, Page
 from .utils import DriveAPI
+from django.forms import ValidationError
 from .forms import DocumentUploadForm, UserLoginForm, UserCreateForm, DocumentContainerForm
 from django.shortcuts import redirect,render 
 from django.http import FileResponse, Http404, JsonResponse
@@ -9,6 +11,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin 
 from pdf2image import convert_from_path
 from django.conf import settings
+from django.db.models import Count
 import os 
 
 class HomeView(View):
@@ -47,19 +50,37 @@ class LoginView(FormView):
 	form_class = UserLoginForm
 	template_name = 'forms/login.html'
 	success_url = '/'
-	def dispatch(self, request, *args, **kwargs):
+	def get(self, request):
 		if request.user.is_authenticated:
 			return redirect('home')
-		else:
-			return super(LoginView, self).dispatch(request, *args, **kwargs)
+		return render(
+			request,
+			template_name=self.template_name,
+			context={'form': self.form_class()}
+		) 
 
-	def form_valid(self,form):
+	def post(self, request):
+		form = UserLoginForm(data=request.POST)
+		if form.is_valid():
+			return self.form_valid(form)
+		else: 
+			return self.form_invalid(form)
+
+	def form_valid(self,form): 
 		user = authenticate(
 			username=form.cleaned_data['username'],
 			password=form.cleaned_data['password']
 			)
-		login(self.request, user)
-		return super(LoginView,self).form_valid(form)
+		if user:
+			login(self.request, user) 
+			return redirect('home')
+		else:  
+			form.add_error(field=None,error=ValidationError("No account matches the information you provided"))
+			return render(
+				request=self.request,
+				template_name=self.template_name,
+				context={'form': form}
+			)
 
 class ProfileView(LoginRequiredMixin, FormView):
 	form_class = DocumentUploadForm
@@ -77,7 +98,7 @@ class ProfileView(LoginRequiredMixin, FormView):
 			context = {
 				'form': self.form_class(),
 				'user_document_containers': user_document_containers,
-				'user_documents': Document.objects.filter(user=request.user)}
+				'user_documents': Document.objects.filter(user=request.user).annotate(num_pages=Count('page'))}
 		)
 		
 	def form_valid(self, form):
@@ -227,6 +248,27 @@ class DocumentCreateView(LoginRequiredMixin, View):
 			 
 		return redirect('profile')
 		
+class MultiView(LoginRequiredMixin, View):
+	def get(self, request, container_id):
+		""" Multiview - simultaneous view of all docs in a 
+		document container whose id is given by pk path param """	
+		container = DocumentContainer.objects.get(id=container_id)
+		docs = Document.objects.filter(containers__in=[container])
+		for d in docs: 
+			setattr(
+				d,
+				'pages', 
+				Page.objects.filter(document=d)
+			)
+		return render(
+			request=request, 
+			template_name='multiview.html',
+			context={
+				'document_container': container,
+				'documents': docs,
+			}
+		)
+
 class DocumentUpdateView(LoginRequiredMixin, CreateView):
 	def get(self, request): 
 		pass

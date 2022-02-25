@@ -1,0 +1,62 @@
+{% extends 'master.html' %}
+{% block content %}
+<div class="container p-5">
+    <div class="row">
+        {% for doc in documents %}
+        <div class="col-sm-6 col-md-4 col-lg-3 p-3 multiview-document" data-currentpage="1">
+            {% for page in doc.pages %}
+            <div class="multiview-page border border-dark rounded {% if forloop.counter != 1 %} d-none {% endif %} "
+                data-pageindex="{{forloop.counter}}">
+                <image src="{{page.image.url}}" style="width:100%" />
+                <div class="text-center">
+                    Page: {{forloop.counter}} / {{doc.pages|length}}
+                </div>
+            </div>
+
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="page-nav-buttons">
+        <button class="float-start d-inline btn btn-dark btn-lg" onclick="multiviewPreviousPage()">Previous</button>
+        <button class="float-end d-inline btn btn-dark btn-lg" onclick="multiviewNextPage()">Next</button>
+    </div>
+</div>
+<script>
+    function multiviewPreviousPage() {
+        let firstDocument = document.querySelectorAll('.multiview-document')[0];
+        let currentPageIndex = firstDocument.dataset.currentpage;
+        console.log(`Hiding pages with index = ${currentPageIndex}`)
+        document.querySelectorAll('.multiview-page').forEach(
+            page => {
+                if (page.dataset.pageindex == currentPageIndex) {
+                    page.classList.add('d-none');
+                }
+                else if (page.dataset.pageindex == (parseInt(currentPageIndex) - 1).toString()) {
+                    page.classList.remove('d-none');
+                }
+            }
+        )
+        currentPageIndex = Math.max(0, parseInt(currentPageIndex) - 1);
+        console.log(currentPageIndex);
+        firstDocument.dataset.currentpage = currentPageIndex.toString();
+    }
+    function multiviewNextPage() {
+        let firstDocument = document.querySelectorAll('.multiview-document')[0];
+        let currentPageIndex = firstDocument.dataset.currentpage;
+        let maxPages = firstDocument.querySelectorAll('.multiview-page').length;
+        document.querySelectorAll('.multiview-page').forEach(
+            page => {
+                if (page.dataset.pageindex == currentPageIndex) {
+                    page.classList.add('d-none');
+                }
+                else if (page.dataset.pageindex == (parseInt(currentPageIndex) + 1).toString()) {
+                    page.classList.remove('d-none');
+                }
+            }
+        )
+        currentPageIndex = Math.min(maxPages, parseInt(currentPageIndex) + 1);
+        firstDocument.dataset.currentpage = currentPageIndex.toString();
+    }
+</script>
+{% endblock %}

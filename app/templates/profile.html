@@ -37,6 +37,7 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ dc.name }}</h5>
                         <p class="card-text">Documents: {{dc.doc_count}}</p>
+                        <a class="btn btn-dark btn-md" href="{% url 'multiview' dc.id %}">Container Multiview</a>
                     </div>
                 </div>
                 {% endfor %}
@@ -68,6 +69,13 @@
                                     Contained in: {% for container in doc.containers.all %}
                                     <span class="rounded bg-warning text-dark p-1">{{container.name}}</span>
                                     {% endfor %}
+                                    <span class="d-block">
+                                        {% if doc.num_pages == 1 %}
+                                        1 page
+                                        {% else %}
+                                        {{ doc.num_pages }} pages
+                                        {% endif %}
+                                    </span>
                                 </p>
                                 <a href="{{doc.location}}" class="btn btn-primary btn-sm">View Document</a>
                             </div>

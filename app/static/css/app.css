@@ -14,6 +14,14 @@ body.dark-theme .footer-wrapper {
   background-color: black;
   color: white;
 }
+body.dark-theme .card {
+  background-color: #aaa;
+  color: black;
+}
+body.dark-theme ul.list-group li.list-group-item {
+  background-color: #aaa;
+  color: black;
+}
 
 body.light-theme {
   background-color: white;

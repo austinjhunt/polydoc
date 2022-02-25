@@ -141,3 +141,6 @@ if 'APPLICATION_ON_HEROKU' in os.environ:
     # Configure Django App for Heroku. 
     import django_heroku
     django_heroku.settings(locals()) 
+    print('using heroku database')
+else:
+    print('using local sqlite3 database')
