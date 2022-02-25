@@ -21,7 +21,8 @@ urlpatterns = [
     path('document/create', views.DocumentCreateView.as_view(), name='document-create'),
     path('document/update/<slug:pk>', views.DocumentUpdateView.as_view(), name='document-update'),
     path('document/delete/<slug:pk>', views.DocumentDeleteView.as_view(), name='document-delete'),
-    path('display_document', views.display_document),
+    path('document/<slug:pk>/pages', views.DocumentPagesView.as_view(), name='document-pages'),
+    #path('display_document', views.display_document),
 
     # Multiview functionality 
     path('multiview/<slug:container_id>', views.MultiView.as_view(), name='multiview'),

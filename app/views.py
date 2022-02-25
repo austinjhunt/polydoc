@@ -5,7 +5,7 @@ from django.forms import ValidationError
 from .forms import DocumentUploadForm, UserLoginForm, UserCreateForm, DocumentContainerForm
 from django.shortcuts import redirect,render 
 from django.http import FileResponse, Http404, JsonResponse
-from django.views.generic import View, FormView, CreateView, UpdateView, DeleteView
+from django.views.generic import View, FormView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin 
@@ -160,10 +160,12 @@ class DocumentContainerDeleteView(LoginRequiredMixin, DeleteView):
 			if not doc_container.user == request.user:
 				raise Http404
 			related_docs = Document.objects.filter(containers__in=[doc_container])
+			related_pages = Page.objects.filter(document__in=related_docs)
 			return render(
 				request,
 				self.template_name,
 				context={ 
+					'related_pages': related_pages,
 					'related_docs': related_docs,
 					'object': doc_container
 				}
@@ -177,6 +179,20 @@ class DocumentContainerDeleteView(LoginRequiredMixin, DeleteView):
 		if not doc_container.user == request.user:
 			raise Http404
 		related_docs = Document.objects.filter(containers__in=[doc_container])
+		related_pages = Page.objects.filter(document__in=related_docs)
+		for page in related_pages:
+			full_folder_path = f'{settings.MEDIA_ROOT}/documents/{request.user.username}/{page.document.title.split(".")[0]}'
+			full_image_path = f'{full_folder_path}/{page.index}.jpg'
+			print(f"Deleting image from f'{full_image_path}")
+			try:
+				os.remove(full_image_path)
+
+				# delete folder if it's empty
+				if len(os.listdir(full_folder_path)) == 0:
+					os.rmdir(full_folder_path)
+			except: 
+				pass 
+			page.delete()
 		for doc in related_docs: 
 			relative_path = doc.location 
 			full_path = relative_path.replace('/media', settings.MEDIA_ROOT)
@@ -214,8 +230,11 @@ class DocumentCreateView(LoginRequiredMixin, View):
 			if len(_fname) > 15: 
 				# Shorten filename if longer than 15 chars. Otherwise it causes problems.
 				_extension = _fname.split('.')[-1]
-				_fname = f'{_fname[:15]}.{_extension}'
-			clean_filename = _fname.replace(' ','-').strip().lower()	
+				# If _fname is less than 20 chars, the extension doesn't get fully removed, so there are still two "."
+				# Setting end_index to resolve this
+				end_index = min(15, len(_fname)-(len(_extension) + 1))
+				_fname = f'{_fname[:end_index]}.{_extension}'
+			clean_filename = _fname.replace(' ','-').strip().lower()
 			new_doc = Document(
 				notes='',
 				title=clean_filename,
@@ -230,8 +249,12 @@ class DocumentCreateView(LoginRequiredMixin, View):
 
 			# now, create an image for each page of the document
 			document_full_path = f'{full_folder_path}/{clean_filename}'
+			print(f"\t *document_full_path: {document_full_path}")	
 			# create a sibling folder with same name as document minus the extension 
-			pages_images_output_folder = f'{full_folder_path}/{clean_filename.split(".")[0]}'	 
+			pages_images_output_folder = f'{full_folder_path}/{clean_filename.split(".")[0]}'
+			#print(f"\t *pages_images_output_folder: {pages_images_output_folder}")
+			#if not os.path.exists(pages_images_output_folder):
+			#	os.makedirs(pages_images_output_folder)
 			# pages = convert_from_path(document_full_path, dpi=300, output_folder=pages_images_output_folder)
 			for index, image in enumerate(convert_from_path(document_full_path, dpi=300, fmt="jpg")):
 				print(image)
@@ -276,8 +299,26 @@ class DocumentUpdateView(LoginRequiredMixin, CreateView):
 class DocumentDeleteView(LoginRequiredMixin, CreateView):
 	def get(self, request): 
 		pass
- 
 
+class DocumentPagesView(LoginRequiredMixin, DetailView):
+	model = Page
+	template_name = 'document_viewer.html'
+
+	def get(self, request, pk): 
+		document = Document.objects.filter(id=pk).first()
+		print(f"Document: {document.title}")
+		pages = Page.objects.filter(document=document)
+		print(f"Pages: len: {len(pages)}")
+		return render(
+			request, 
+			template_name=self.template_name,
+			context={
+				'document': document,
+				'document_pages': pages
+			} 
+		)
+
+'''
 def display_document(request):
     # Use credentials for whatever
     obj = DriveAPI()
@@ -297,7 +338,7 @@ def display_document(request):
         return FileResponse(open(f_name, 'rb'), content_type='application/pdf')
     except FileNotFoundError:
         raise Http404()
-
+'''
 class ToggleThemeView(View):
 	def post(self, request):
 		import json
