@@ -26,8 +26,38 @@
         <div class="col-sm-12 text-end">
             <a href="{% url 'create-document' %}" class="btn btn-md btn-success"><i class="fa fa-plus"></i> Add
                 Documents</a>
+            <button onclick="toggleZoomOnHover(this)" class="btn btn-primary btn-md">
+                <i class="fa fa-magnifying-glass"></i> Enable "Zoom on Hover"
+            </button>
         </div>
         <script>
+            let mouseEnterListener = (event) => {
+                event.target.style.transform = 'scale(2)';
+            }
+            let mouseLeaveListener = (event) => {
+                event.target.style.transform = 'scale(1)';
+            }
+            let toggleZoomOnHover = (btn) => {
+                if (btn.innerHTML.includes("Enable")) {
+                    document.querySelectorAll('.page-image').forEach(pageImage => {
+                        pageImage.addEventListener('mouseenter', mouseEnterListener, false)
+                        pageImage.addEventListener('mouseleave', mouseLeaveListener, false)
+                    })
+                    btn.innerHTML = btn.innerHTML.replace('Enable', 'Disable');
+                    btn.classList.toggle('btn-primary');
+                    btn.classList.toggle('btn-danger');
+                } else {
+                    btn.innerHTML = btn.innerHTML.replace('Disable', 'Enable');
+                    btn.classList.toggle('btn-primary');
+                    btn.classList.toggle('btn-danger');
+                    document.querySelectorAll('.page-image').forEach(pageImage => {
+                        pageImage.removeEventListener('mouseenter', mouseEnterListener, false)
+                        pageImage.removeEventListener('mouseleave', mouseLeaveListener, false)
+                    })
+                }
+
+            }
+
             let saveFocusNotes = () => {
                 let multiviewFocusArea = document.querySelector('.multiview-focus');
                 let multiviewFocusNotesArea = multiviewFocusArea.querySelector('.notes');
