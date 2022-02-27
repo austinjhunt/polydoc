@@ -232,14 +232,9 @@ class DocumentCreateView(LoginRequiredMixin, View):
 			new_doc.save()
 
 			# now, create an image for each page of the document
-			document_full_path = f'{full_folder_path}/{clean_filename}'
-			print(f"\t *document_full_path: {document_full_path}")	
+			document_full_path = f'{full_folder_path}/{clean_filename}' 
 			# create a sibling folder with same name as document minus the extension 
-			pages_images_output_folder = f'{full_folder_path}/{clean_filename.split(".")[0]}'
-			#print(f"\t *pages_images_output_folder: {pages_images_output_folder}")
-			#if not os.path.exists(pages_images_output_folder):
-			#	os.makedirs(pages_images_output_folder)
-			# pages = convert_from_path(document_full_path, dpi=300, output_folder=pages_images_output_folder)
+			pages_images_output_folder = f'{full_folder_path}/{clean_filename.split(".")[0]}' 
 			for index, image in enumerate(convert_from_path(document_full_path, dpi=300, fmt="jpg")):
 				print(image)
 				print(image.__dict__)

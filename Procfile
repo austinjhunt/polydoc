@@ -1,1 +1,1 @@
-web: gunicorn polydoc.wsgi --timeout 10
+web: gunicorn polydoc.wsgi --timeout 60
