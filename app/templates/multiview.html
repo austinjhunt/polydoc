@@ -1,82 +1,148 @@
 {% extends 'master.html' %}
 {% block content %}
-<div class="container p-5">
+<div class="container p-5 position-relative">
+    <h1>Viewing all documents in {{document_container.name}}</h1>
+    <hr />
+    <div class="multiview-focus d-none row">
+        <div class="col-sm-12 text-end">
+            <button onclick="closeFocusArea()" class="btn btn-light btn-md"><i class="fa fa-x"></i> Close
+                Focus</button>
+        </div>
+        <div class="col-sm-12 col-lg-6">
+            <h2>Notes</h2>
+            <button class="float-end btn btn-success btn-sm" onclick="saveFocusNotes()">
+                <i class="fa fa-save"></i> Save Notes
+            </button>
+        </div>
+        <div class="col-sm-12 col-lg-6">
+            <h2>Document</h2>
+        </div>
+        <div class="notes col-sm-12 col-lg-6">
+
+        </div>
+        <div class="document col-sm-12 col-lg-6"></div>
+    </div>
     <div class="row">
+        <div class="col-sm-12 text-end">
+            <a href="{% url 'create-document' %}" class="btn btn-md btn-success"><i class="fa fa-plus"></i> Add
+                Documents</a>
+        </div>
+        <script>
+            let saveFocusNotes = () => {
+                let multiviewFocusArea = document.querySelector('.multiview-focus');
+                let multiviewFocusNotesArea = multiviewFocusArea.querySelector('.notes');
+                let notesTextArea = multiviewFocusNotesArea.querySelector('textarea');
+                saveNotes(notesTextArea.value, notesTextArea.dataset.pageid);
+            }
+
+            let closeFocusArea = () => {
+                let multiviewFocusArea = document.querySelector('.multiview-focus');
+                let multiviewFocusNotesArea = multiviewFocusArea.querySelector('.notes');
+                let multiviewFocusDocumentArea = multiviewFocusArea.querySelector('.document');
+                multiviewFocusDocumentArea.innerHTML = "";
+                multiviewFocusNotesArea.innerHTML = "";
+                multiviewFocusArea.classList.toggle('d-none');
+            }
+
+            async function saveNotes(text, pageId) {
+                return fetch(`/page-notes/${pageId}/`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        'notes': text,
+                    }),
+                    headers: {
+                        'X-CSRFToken': CSRF_TOKEN,
+                    }
+                }).then(response => response.json())
+                    .then(response => {
+                        // wait for successful update before closing notes
+                        var toast = document.querySelector('.toast');
+                        toast.querySelector('.toast-bold').textContent = 'Notes Updated';
+                        toast.querySelector('.toast-when').textContent = 'Just Now';
+                        toast.querySelector('.toast-body').textContent = response['result'];
+                        TOAST.show(); // the Toast object corresponding to the above HTML element 
+                    }
+                    ).catch(
+                        error => console.log(error)
+                    );
+            }
+
+            let toggleNotes = (btn, pageId) => {
+                let notesContainer = document.getElementById(`page-${pageId}-notes`);
+                if (notesContainer.classList.contains('active')) {
+                    saveNotes(notesContainer.querySelector('textarea').value, pageId)
+                        .then(response => {
+                            notesContainer.classList.toggle('active');
+                            btn.classList.toggle('btn-light');
+                            btn.classList.toggle('btn-success');
+                            btn.innerHTML = '<i class="fa fa-edit"></i> Open Page Notes';
+                        });
+                } else {
+                    // just opening notes.
+                    btn.classList.toggle('btn-light');
+                    btn.classList.toggle('btn-success');
+                    btn.innerHTML = '<i class="fa fa-save"></i> Save Page Notes';
+                    notesContainer.classList.toggle('active');
+
+                }
+            }
+            let focusDoc = (docId) => {
+                // bring document and corresponding notes into focus 
+                let doc = document.getElementById(`doc-${docId}`);
+                let currentPage = doc.dataset.currentpage;
+                let multiviewFocusArea = document.querySelector('.multiview-focus');
+                let multiviewFocusNotesArea = multiviewFocusArea.querySelector('.notes');
+                let multiviewFocusDocumentArea = multiviewFocusArea.querySelector('.document');
+                doc.querySelectorAll('.multiview-page').forEach((page, index) => {
+                    let pageImage = page.querySelector('.page-image').cloneNode(true);
+                    let pageNotes = page.querySelector('.page-notes').cloneNode(true);
+                    pageImage.id = `${pageImage.id}-clone`;
+                    pageNotes.id = `${pageNotes.id}-clone`;
+                    // currentPage index starts at 1; this index starts at 0. mark as active 
+                    // if this index + 1 == current page
+                    if (index + 1 == parseInt(currentPage)) {
+                        pageImage.classList.add('active');
+                        pageNotes.classList.add('active');
+                    }
+                    multiviewFocusDocumentArea.appendChild(pageImage);
+                    multiviewFocusNotesArea.appendChild(pageNotes);
+                });
+                multiviewFocusArea.classList.toggle('d-none');
+            }
+        </script>
         {% for doc in documents %}
-        <div class="col-sm-6 col-md-4 col-lg-3 p-3 multiview-document" data-currentpage="1">
+        <div class="col-sm-6 col-md-4 col-lg-3 p-3 multiview-document" data-currentpage="1" id="doc-{{doc.id}}">
             {% for page in doc.pages %}
-            <div class="multiview-page border border-dark rounded {% if forloop.counter != 1 %} d-none {% endif %} "
+            <div class="card w-100 multiview-page border border-dark rounded {% if forloop.counter != 1 %} d-none {% endif %} "
                 data-pageindex="{{forloop.counter}}">
-                <image src="{{page.image.url}}" style="width:100%" />
-                <div class="text-center">
-                    Page: {{forloop.counter}} / {{doc.pages|length}}
+                <div id="page-{{page.id}}-notes" class="page-notes notes-wrapper">
+                    <textarea class="notes" data-pageid="{{page.id}}">{{page.notes}}</textarea>
+                </div>
+                <div class="card-header">
+                    <div class="text-end">
+                        <button class="btn btn-sm btn-light notes-button m-0"
+                            onclick="toggleNotes(this, '{{page.id}}')">
+                            <i class="fa fa-edit"></i>&nbsp;Open Page Notes</button>
+                        <button onclick="focusDoc('{{doc.id}}')" class="btn btn-sm btn-primary m-0">
+                            <i class="fa fa-crosshairs"></i>&nbsp;Focus</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="page-image">
+                        <img src="{{page.image.url}}" id="page-{{page.id}}-image" class="h-100 w-100">
+                    </div>
+                </div>
+                <div class="card-footer text-center ">
+                    {{forloop.counter}} / {{doc.pages|length}}
                 </div>
             </div>
-
             {% endfor %}
         </div>
         {% endfor %}
+        <div class="page-nav-buttons mb-5">
+            <button class="float-start d-inline btn btn-dark btn-lg" onclick="multiviewPreviousPage()">Previous</button>
+
+            <button class="float-end d-inline btn btn-dark btn-lg" onclick="multiviewNextPage()">Next</button>
+        </div>
     </div>
-    <div class="page-nav-buttons">
-        <button class="float-start d-inline btn btn-dark btn-lg" onclick="multiviewPreviousPage()">Previous</button>
-        <button class="float-end d-inline btn btn-dark btn-lg" onclick="multiviewNextPage()">Next</button>
-    </div>
-</div>
-<script>
-    function multiviewPreviousPage() {
-        let firstDocument = document.querySelectorAll('.multiview-document')[0];
-        let currentPageIndex = firstDocument.dataset.currentpage;
-
-        console.log(`Hiding pages with index = ${currentPageIndex}`)
-        if (parseInt(currentPageIndex) - 1 >= 1) {
-            document.querySelectorAll('.multiview-page').forEach(
-                page => {
-                    if (page.dataset.pageindex == currentPageIndex) {
-                        page.classList.add('d-none');
-                    }
-                    else if (page.dataset.pageindex == (parseInt(currentPageIndex) - 1).toString()) {
-                        page.classList.remove('d-none');
-                    }
-                }
-            )
-            currentPageIndex = Math.max(1, parseInt(currentPageIndex) - 1);
-            firstDocument.dataset.currentpage = currentPageIndex.toString();
-        }
-
-    }
-    function multiviewNextPage() {
-        let firstDocument = document.querySelectorAll('.multiview-document')[0];
-        let currentPageIndex = firstDocument.dataset.currentpage;
-        let maxPages = firstDocument.querySelectorAll('.multiview-page').length;
-        console.log(`Hiding pages with index = ${currentPageIndex}`)
-        if (parseInt(currentPageIndex) + 1 <= maxPages) {
-            document.querySelectorAll('.multiview-page').forEach(
-                page => {
-                    if (page.dataset.pageindex == currentPageIndex) {
-                        page.classList.add('d-none');
-                    }
-                    else if (page.dataset.pageindex == (parseInt(currentPageIndex) + 1).toString()) {
-                        page.classList.remove('d-none');
-                    }
-                }
-            )
-            currentPageIndex = Math.min(maxPages, parseInt(currentPageIndex) + 1);
-            firstDocument.dataset.currentpage = currentPageIndex.toString();
-        }
-    }
-
-    document.onkeydown = navigate;
-    function navigate(e) {
-        e = e || window.event;
-        if (e.keyCode == '37') {
-            // left arrow
-            multiviewPreviousPage();
-        }
-        else if (e.keyCode == '39') {
-            // right arrow
-            multiviewNextPage();
-        }
-
-    }
-</script>
-{% endblock %}
+    {% endblock %}

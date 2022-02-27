@@ -13,6 +13,8 @@ from pdf2image import convert_from_path
 from django.conf import settings
 from django.db.models import Count
 import os 
+import json
+
 
 class HomeView(View):
 	def get(self, request): 
@@ -178,30 +180,7 @@ class DocumentContainerDeleteView(LoginRequiredMixin, DeleteView):
 		doc_container = DocumentContainer.objects.get(id=pk)
 		if not doc_container.user == request.user:
 			raise Http404
-		related_docs = Document.objects.filter(containers__in=[doc_container])
-		related_pages = Page.objects.filter(document__in=related_docs)
-		for page in related_pages:
-			full_folder_path = f'{settings.MEDIA_ROOT}/documents/{request.user.username}/{page.document.title.split(".")[0]}'
-			full_image_path = f'{full_folder_path}/{page.index}.jpg'
-			print(f"Deleting image from f'{full_image_path}")
-			try:
-				os.remove(full_image_path)
-
-				# delete folder if it's empty
-				if len(os.listdir(full_folder_path)) == 0:
-					os.rmdir(full_folder_path)
-			except: 
-				pass 
-			page.delete()
-		for doc in related_docs: 
-			relative_path = doc.location 
-			full_path = relative_path.replace('/media', settings.MEDIA_ROOT)
-			try:
-				os.remove(full_path)
-			except: 
-				pass 
-			doc.delete()
-		doc_container.delete()
+		doc_container.delete()  
 		return redirect('profile')
 
 class DocumentCreateView(LoginRequiredMixin, View): 
@@ -217,11 +196,16 @@ class DocumentCreateView(LoginRequiredMixin, View):
 		)
 	def post(self, request): 
 		data = dict(request.POST).items() 
+		print(data)
 		document_containers = [
 			key.split('-')[1] for key,val in data if key.startswith('document_container_id-')
 		] 
 		files = request.FILES # MultiValueDict with 'file' key
 		files = files.getlist('file') # list of <InMemoryUploadedFile>
+		print(files)
+		if len(files) == 0:
+			print('empty files')
+			return redirect('profile')
 		# Will be used to serve on front end. 
 		relative_folder_path = f'/media/documents/{request.user.username}'  
 		full_folder_path = f'{settings.MEDIA_ROOT}/documents/{request.user.username}'  
@@ -296,9 +280,35 @@ class DocumentUpdateView(LoginRequiredMixin, CreateView):
 	def get(self, request): 
 		pass
 
-class DocumentDeleteView(LoginRequiredMixin, CreateView):
-	def get(self, request): 
-		pass
+class DocumentDeleteView(LoginRequiredMixin, DeleteView):
+	model = Document
+	success_url = 'profile'
+	login_url = 'login'
+	template_name = 'forms/delete-document.html'  
+	def get(self, request, pk):
+		try:
+			doc = Document.objects.get(id=pk) 
+			if not doc.user == request.user: 
+				raise Http404 
+			related_pages = Page.objects.filter(document__in=[doc]) 
+			return render(
+				request,
+				self.template_name,
+				context={ 
+					'related_pages': related_pages, 
+					'object': doc
+				}
+			)
+		except Exception as e:
+			print(e) 
+			return redirect('home')
+
+	def post(self, request, pk): 
+		doc = Document.objects.get(id=pk)
+		if not doc.user == request.user:
+			raise Http404 
+		doc.delete() # will auto delete related pages
+		return redirect('profile')
 
 class DocumentPagesView(LoginRequiredMixin, DetailView):
 	model = Page
@@ -317,6 +327,17 @@ class DocumentPagesView(LoginRequiredMixin, DetailView):
 				'document_pages': pages
 			} 
 		)
+
+class PageNotesEditView(View):
+	def post(self, request,pk):
+		page = Page.objects.get(id=pk)
+		notes = json.loads(request.body.decode())['notes']
+		page.notes = notes 
+		page.save()
+		return JsonResponse(
+			{'result': f'successfully updated notes for Page(id={pk})'}
+		)
+		
 
 '''
 def display_document(request):
@@ -341,6 +362,5 @@ def display_document(request):
 '''
 class ToggleThemeView(View):
 	def post(self, request):
-		import json
 		request.session['theme'] = json.loads(request.body.decode())['current_theme']
 		return JsonResponse({'result': f'session updated to use theme {request.session["theme"]}'})

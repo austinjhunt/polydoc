@@ -4,7 +4,7 @@
     <h1>Add your documents here</h1>
     <hr />
     {% if user_document_containers %}
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="{% url 'create-document' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
             <p><b>Select the container(s) to which your new documents will belong. One or more containers is
@@ -27,6 +27,7 @@
     {% else %}
     <p class="alert alert-warning p-3">Please create at least one document container in order to upload
         documents</p>
+    <a class="btn btn-dark btn-lg" href="{% url 'create-document-container' %}">Create a Document Container</a>
     {% endif %}
 </div>
 {% endblock %}

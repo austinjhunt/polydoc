@@ -22,6 +22,9 @@ body.dark-theme ul.list-group li.list-group-item {
   background-color: #aaa;
   color: black;
 }
+body.dark-theme .footer-wrapper footer ul.nav .nav-item .nav-link {
+  color: white;
+}
 
 body.light-theme {
   background-color: white;
@@ -32,6 +35,73 @@ body.light-theme .navbar {
 body.light-theme .footer-wrapper {
   background-color: white;
   color: #003551;
+}
+
+.multiview-focus {
+  /* area where you can bring one document into focus, hidden by default */
+  transition: 0.3s linear;
+}
+.multiview-focus .notes .page-notes {
+  display: none;
+}
+.multiview-focus .notes .page-notes.active {
+  z-index: 1;
+  height: 100%;
+  width: 100%;
+  display: block;
+}
+.multiview-focus .notes .page-notes.active textarea {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: url(http://i.stack.imgur.com/ynxjD.png) repeat-y;
+  font: normal 14px verdana;
+  line-height: 25px;
+  padding: 2px 10px;
+  border: solid 1px #ddd;
+}
+.multiview-focus .document .page-image {
+  display: none;
+}
+.multiview-focus .document .page-image.active {
+  display: block;
+}
+
+.multiview-page {
+  /* notes */
+}
+.multiview-page .page-image {
+  transition: 0.3s linear;
+}
+.multiview-page .page-image.zoom {
+  transform: scale(2.5);
+  position: relative;
+  z-index: 1;
+}
+.multiview-page .page-notes {
+  position: absolute;
+  height: 0;
+  width: 0;
+  transition: 0.2s linear;
+}
+.multiview-page .page-notes textarea {
+  display: none;
+  height: 0%;
+  width: 0%;
+}
+.multiview-page .page-notes.active {
+  z-index: 1;
+  top: 13%;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+.multiview-page .page-notes.active textarea {
+  display: block;
+  height: 100%;
+  width: 100%;
 }
 
 body {

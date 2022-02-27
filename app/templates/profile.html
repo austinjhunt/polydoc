@@ -13,7 +13,7 @@
                     </div>
                     <div class="col-sm-4 text-end">
                         <div class="d-inline text-end mb-3">
-                            <a class="btn btn-md btn-success" href="{% url 'document-container-create' %}">
+                            <a class="btn btn-md btn-success" href="{% url 'create-document-container' %}">
                                 <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-box "></i> Add Container
                             </a>
                         </div>
@@ -24,12 +24,12 @@
                 <div class="card" style="width: 18rem;">
                     <div class="card-header">
                         <div class="text-end">
-                            <a href="{% url 'document-container-update' dc.id %}" class="btn btn-success btn-sm"
+                            <a href="{% url 'update-document-container' dc.id %}" class="btn btn-success btn-sm"
                                 title="update document container">
                                 Edit <i class="fa fa-edit"></i>
                             </a>
-                            <a href="{% url 'document-container-delete' dc.id %}" class="btn btn-danger btn-sm"
-                                title="update document container">
+                            <a href="{% url 'delete-document-container' dc.id %}" class="btn btn-danger btn-sm"
+                                title="delete document container">
                                 Delete <i class="fa fa-trash"></i>
                             </a>
                         </div>
@@ -51,7 +51,7 @@
                     </div>
                     <div class="col-sm-4 text-end">
                         <div class="d-inline text-end mb-3">
-                            <a class="btn btn-md btn-success" href="{% url 'document-create' %}">
+                            <a class="btn btn-md btn-success" href="{% url 'create-document' %}">
                                 <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-file"></i> Add Docs
                             </a>
                         </div>
@@ -63,8 +63,20 @@
                     {% for doc in user_documents %}
                     <div class="col-sm-12 col-md-6">
                         <div class="card" style="width: 18rem;">
-                            <div class="card-header">{{doc.title}}</div>
+                            <div class="card-header">
+                                <div class="text-end">
+                                    <a href="{% url 'update-document' doc.id %}" class="btn btn-success btn-sm"
+                                        title="update document">
+                                        Edit <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'delete-document' doc.id %}" class="btn btn-danger btn-sm"
+                                        title="delete document">
+                                        Delete <i class="fa fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
                             <div class="card-body">
+                                <h5 class="card-title">{{doc.title}}</h5>
                                 <p class="card-text">
                                     Contained in: {% for container in doc.containers.all %}
                                     <span class="rounded bg-warning text-dark p-1">{{container.name}}</span>
@@ -78,7 +90,8 @@
                                     </span>
                                 </p>
                                 <a href="{{doc.location}}" class="btn btn-primary btn-sm">View Document</a>
-                                <a href="{% url 'document-pages' doc.id %}" class="btn btn-primary btn-sm">View Pages</a>
+                                <a href="{% url 'document-pages' doc.id %}" class="btn btn-primary btn-sm">View
+                                    Pages</a>
                             </div>
                         </div>
                     </div>

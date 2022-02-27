@@ -18,4 +18,15 @@ body.dark-theme {
       color: black;
     }
   }
+  .footer-wrapper {
+    footer {
+      ul.nav {
+        .nav-item {
+          .nav-link {
+            color: white;
+          }
+        }
+      }
+    }
+  }
 }

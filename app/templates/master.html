@@ -23,7 +23,7 @@
   <!-- navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#"><i class="fa-solid fa-object-group"></i> PolyDoc</a>
+      <a class="navbar-brand" href="{% url 'home' %}"><i class="fa-solid fa-object-group"></i> PolyDoc</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -38,18 +38,15 @@
             </div>
           </li>
           {% if user.is_authenticated %}
-          <div class="dropdown">
-            <a class="dropdown-toggle text-light" href="#" role="button" id="account-dropdown-menu-button"
-              data-bs-toggle="dropdown" aria-expanded="false">
-              Account
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="account-dropdown-menu-button">
-              <li><a class="dropdown-item disabled" href="#">{{user.username}}</a></li>
-              <div class="dropdown-divider"></div>
-              <li><a class="dropdown-item" href="{% url 'profile' %}">My Profile</a></li>
-              <li><a class="dropdown-item" href="{% url 'logout' %}">Sign Out</a></li>
-            </ul>
-          </div>
+          <li class="nav-item">
+            <a class="nav-link disabled" href="#">{{user.username}}</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profile' %}">My Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'logout' %}">Sign Out</a>
+          </li>
           {% else %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'register' %}">Register</a>
@@ -62,9 +59,23 @@
       </div>
     </div>
   </nav>
+  <div aria-live="polite" aria-atomic="true" class="position-relative ">
+    <div class="toast-container position-absolute end-0 top-0 p-3">
+      <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto toast-bold">Toast</strong>
+          <small class="text-muted toast-when">just now</small>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          See? Just like this.
+        </div>
+      </div>
+    </div>
+  </div>
   {% block content %} {% endblock %}
 
-  <div class="container-fluid footer-wrapper">
+  <div class="container-fluid fixed-bottom footer-wrapper">
     <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top ">
       <p class="col-md-4 mb-0 text-muted">© 2022 PolyDoc</p>
 
