@@ -53,12 +53,13 @@
     }
     &.active {
       z-index: 1;
-      top: 13%;
+      top: 11%;
       bottom: 0;
       right: 0;
       left: 0;
-      height: 100%;
+      height: 80%;
       width: 100%;
+      overflow-y: scroll;
       textarea {
         display: block;
         height: 100%;
