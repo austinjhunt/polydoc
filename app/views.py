@@ -230,24 +230,9 @@ class DocumentCreateView(LoginRequiredMixin, View):
 			for container_id in document_containers:
 				new_doc.containers.add(DocumentContainer.objects.get(id=container_id))
 			new_doc.save()
-
-			# now, create an image for each page of the document
-			document_full_path = f'{full_folder_path}/{clean_filename}' 
-			# create a sibling folder with same name as document minus the extension 
-			pages_images_output_folder = f'{full_folder_path}/{clean_filename.split(".")[0]}' 
-			for index, image in enumerate(convert_from_path(document_full_path, dpi=300, fmt="jpg")):
-				print(image)
-				print(image.__dict__)
-				new_page = Page( 
-					document=new_doc, 
-					index=index,
-					notes=''
-				)
-				new_page.save()
-				print(f'Saving image {index}.jpg')
-				new_page.image.save(f'{index}.jpg', image.fp)
-
-			 
+			new_doc.create_page_images(
+				document_relative_path=f'{full_folder_path}/{clean_filename}' 
+			)   
 		return redirect('profile')
 		
 class MultiView(LoginRequiredMixin, View):

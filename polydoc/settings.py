@@ -122,6 +122,9 @@ STATIC_ROOT = f'{BASE_DIR}/staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = f'{BASE_DIR}/media'
 
+# Testing 
+TEST_ROOT = f'{BASE_DIR}/app/tests'
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
