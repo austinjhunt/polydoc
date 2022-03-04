@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User  
-import datetime
+from django.utils import timezone  
 from django.dispatch import receiver
 import os  
 from django.conf import settings  
@@ -32,7 +32,7 @@ class Document(models.Model):
     notes = models.TextField(default='')
     title = models.CharField(max_length=256, default='Document') 
     location = models.CharField(max_length=512, default='')
-    upload_datetime = models.DateTimeField(default=datetime.datetime.now, blank=True)
+    upload_datetime = models.DateTimeField(default=timezone.now, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # Allow multiple files to be uploaded. 
     file = models.FileField(upload_to=user_directory_path, blank=True)
