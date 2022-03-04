@@ -25,6 +25,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      - name: Install poppler-utils in order to run tests with PDF2Image
+        run: |
+          sudo apt-get install poppler
       - name: Run Tests
         run: |
           python manage.py test
