@@ -166,10 +166,9 @@ class DocumentContainerImportView(LoginRequiredMixin, CreateView):
 			clean_filename = _fname.replace(' ','-').strip().lower()
 
 			# Download file as a pdf from drive
+			drive.get_file(f.get('id'), full_folder_path, _fname)
+
 			full_filename = f'{full_folder_path}/{_fname}'  
-			drive.get_file(f.get('id'), full_filename)
-
-
 			new_doc = Document(
 				notes='',
 				title=clean_filename,

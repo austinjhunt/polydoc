@@ -70,7 +70,7 @@ class DriveAPI:
         #print("Here's a list of files: \n")
         #print(*items, sep="\n", end="\n\n")
   
-    def get_file(self, file_id, file_name_with_full_path):
+    def get_file(self, file_id, file_path, file_name):
         #response = self.service.files().get_media(fileId=file_id)
         response = self.service.files().export(fileId=file_id, mimeType='application/pdf')
         print(response.to_json())
@@ -88,8 +88,11 @@ class DriveAPI:
   
             fh.seek(0)
 
+            if not os.path.exists(file_path):
+            	os.makedirs(file_path)
+
             # Write the received data to the file
-            with open(file_name_with_full_path, 'wb') as f:
+            with open(f'{file_path}/{file_name}', 'wb') as f:
                 shutil.copyfileobj(fh, f)
   
             print("File Downloaded")
