@@ -18,6 +18,13 @@
                             </a>
                         </div>
                     </div>
+                    <div class="col-sm-4 text-end">
+                        <div class="d-inline text-end mb-3">
+                            <a class="btn btn-md btn-success" href="{% url 'import-google-drive-folder' %}">
+                                <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-box "></i> Add Drive Folder
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 <hr />
                 {% for dc in user_document_containers %}

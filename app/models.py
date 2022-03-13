@@ -36,7 +36,7 @@ class Document(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # Allow multiple files to be uploaded. 
     file = models.FileField(upload_to=user_directory_path, blank=True)
-    containers = models.ManyToManyField(DocumentContainer, blank=True)
+    containers = models.ManyToManyField(DocumentContainer, blank=True) 
     def create_page_images(self, document_relative_path=""):
         """
         Create a folder named after a document (without the extension"""

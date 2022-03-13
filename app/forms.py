@@ -1,10 +1,10 @@
 from pydoc import doc
-from django.contrib.auth.forms import  AuthenticationForm, UsernameField, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UsernameField, UserCreationForm
 from django import forms
 from .validators import validate_file_extension
 from .models import DocumentContainer
 
-class UserLoginForm(forms.Form):
+class UserLoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super(UserLoginForm, self).__init__(*args, **kwargs) 
     username = UsernameField(widget=forms.TextInput(

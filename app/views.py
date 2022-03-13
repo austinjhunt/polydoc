@@ -1,6 +1,6 @@
 from re import template
 from .models import DocumentContainer, Document, Page
-from .utils import DriveAPI
+from .drive.utils import DriveAPI
 from django.forms import ValidationError
 from .forms import DocumentUploadForm, UserLoginForm, UserCreateForm, DocumentContainerForm
 from django.shortcuts import redirect,render 
@@ -127,6 +127,69 @@ class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
 			name=form.cleaned_data['name'],
 			user=self.request.user
 		).save()
+		return redirect('profile')
+
+class DocumentContainerImportView(LoginRequiredMixin, CreateView):
+	model = DocumentContainer
+	form_class = DocumentContainerForm
+	success_url = 'profile'
+	login_url = 'login'
+	template_name = 'forms/import-google-drive-folder.html'
+
+	def form_valid(self, form): 
+		folder_name = form.cleaned_data['name']
+
+		document_container = DocumentContainer(
+			name=folder_name,
+			user=self.request.user
+		)
+		document_container.save()
+
+		drive = DriveAPI()
+		folder_id = drive.get_folder_id(folder_name)
+		files = drive.get_folder_list(folder_id)
+
+		relative_folder_path = f'/media/documents/{self.request.user.username}'  
+		full_folder_path = f'{settings.MEDIA_ROOT}/documents/{self.request.user.username}'  
+
+		for f in files:
+			_fname = f.get('name') + ".pdf"
+
+			# Store pdf in database
+			if len(_fname) > 15: 
+				# Shorten filename if longer than 15 chars. Otherwise it causes problems.
+				_extension = _fname.split('.')[-1]
+				# If _fname is less than 20 chars, the extension doesn't get fully removed, so there are still two "."
+				# Setting end_index to resolve this
+				end_index = min(15, len(_fname)-(len(_extension) + 1))
+				_fname = f'{_fname[:end_index]}.{_extension}'
+			clean_filename = _fname.replace(' ','-').strip().lower()
+
+			# Download file as a pdf from drive
+			full_filename = f'{full_folder_path}/{_fname}'  
+			drive.get_file(f.get('id'), full_filename)
+
+
+			new_doc = Document(
+				notes='',
+				title=clean_filename,
+				location=f'{relative_folder_path}/{clean_filename}',
+				user=self.request.user, 
+			)
+			with open(full_filename, 'rb') as file:
+				new_doc.file.save(clean_filename, file)
+			new_doc.save()
+			new_doc.containers.add(document_container.id)
+			new_doc.save()
+			new_doc.create_page_images(
+				document_relative_path=f'{full_folder_path}/{clean_filename}' 
+			)   
+
+		# Create document container associated with this user 
+		#DocumentContainer(
+		#	name=form.cleaned_data['name'],
+		#	user=self.request.user
+		#).save()
 		return redirect('profile')
 
 class DocumentContainerUpdateView(LoginRequiredMixin, UpdateView):

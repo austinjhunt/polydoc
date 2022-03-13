@@ -14,6 +14,7 @@ urlpatterns = [
 
     # Document containers
     path('documentcontainer/create', views.DocumentContainerCreateView.as_view(), name='create-document-container'),
+    path('documentcontainer/import', views.DocumentContainerImportView.as_view(), name='import-google-drive-folder'),
     path('documentcontainer/update/<slug:pk>', views.DocumentContainerUpdateView.as_view(), name='update-document-container'),
     path('documentcontainer/delete/<slug:pk>', views.DocumentContainerDeleteView.as_view(), name='delete-document-container'),
 
