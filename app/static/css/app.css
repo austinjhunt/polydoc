@@ -3,6 +3,152 @@
   color: white;
 }
 
+.loader {
+  background: white;
+  min-height: 100vh;
+  font-family: Roboto, Arial;
+  color: #adafb6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 20;
+  bottom: 0;
+}
+
+.boxes {
+  height: 32px;
+  width: 32px;
+  position: relative;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  margin-top: 32px;
+  -webkit-transform: rotateX(60deg) rotateZ(45deg) rotateY(0deg) translateZ(0px);
+  transform: rotateX(60deg) rotateZ(45deg) rotateY(0deg) translateZ(0px);
+}
+
+.boxes .box {
+  width: 32px;
+  height: 32px;
+  top: 0px;
+  left: 0;
+  position: absolute;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+
+.boxes .box:nth-child(1) {
+  -webkit-transform: translate(100%, 0);
+  transform: translate(100%, 0);
+  -webkit-animation: box1 1s linear infinite;
+  animation: box1 1s linear infinite;
+}
+
+.boxes .box:nth-child(2) {
+  -webkit-transform: translate(0, 100%);
+  transform: translate(0, 100%);
+  -webkit-animation: box2 1s linear infinite;
+  animation: box2 1s linear infinite;
+}
+
+.boxes .box:nth-child(3) {
+  -webkit-transform: translate(100%, 100%);
+  transform: translate(100%, 100%);
+  -webkit-animation: box3 1s linear infinite;
+  animation: box3 1s linear infinite;
+}
+
+.boxes .box:nth-child(4) {
+  -webkit-transform: translate(200%, 0);
+  transform: translate(200%, 0);
+  -webkit-animation: box4 1s linear infinite;
+  animation: box4 1s linear infinite;
+}
+
+.boxes .box > div {
+  background: #5cf6c8;
+  --translateZ: 15.5px;
+  --rotateY: 0deg;
+  --rotateX: 0deg;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #5cf6c8;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  -webkit-transform: rotateY(var(--rotateY)) rotateX(var(--rotateX)) translateZ(var(--translateZ));
+  transform: rotateY(var(--rotateY)) rotateX(var(--rotateX)) translateZ(var(--translateZ));
+}
+
+.boxes .box > div:nth-child(1) {
+  top: 0;
+  left: 0;
+  background: #5cf6c8;
+}
+
+.boxes .box > div:nth-child(2) {
+  background: #14a1f2;
+  right: 0;
+  --rotateY: 90deg;
+}
+
+.boxes .box > div:nth-child(3) {
+  background: #44e0f5;
+  --rotateX: -90deg;
+}
+
+.boxes .box > div:nth-child(4) {
+  background: #dbe3f4;
+  top: 0;
+  left: 0;
+  --translateZ: -90px;
+}
+
+@keyframes box1 {
+  0%, 50% {
+    transform: translate(100%, 0);
+  }
+  100% {
+    transform: translate(200%, 0);
+  }
+}
+@keyframes box2 {
+  0% {
+    transform: translate(0, 100%);
+  }
+  50% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(100%, 0);
+  }
+}
+@keyframes box3 {
+  0%, 50% {
+    transform: translate(100%, 100%);
+  }
+  100% {
+    transform: translate(0, 100%);
+  }
+}
+@keyframes box4 {
+  0% {
+    transform: translate(200%, 0);
+  }
+  50% {
+    transform: translate(200%, 100%);
+  }
+  100% {
+    transform: translate(100%, 100%);
+  }
+}
 body.dark-theme {
   background-color: #003551;
   color: white;
@@ -26,12 +172,28 @@ body.dark-theme ul.list-group li.list-group-item.active {
   background-color: #339;
   color: lightgrey;
 }
-body.dark-theme table tbody tr {
+body.dark-theme .table-container {
+  background-color: #224055;
+  border-radius: 5px;
+}
+body.dark-theme .table-container table {
+  color: white;
+}
+body.dark-theme .table-container table tbody tr {
   cursor: pointer;
 }
-body.dark-theme table tbody tr.table-active {
-  border-top: 5px solid yellow;
-  border-bottom: 5px solid yellow;
+body.dark-theme .table-container table tbody tr.table-active {
+  border-top: 5px solid #a9a336;
+  border-bottom: 5px solid #a9a336;
+  color: #a9a336;
+}
+body.dark-theme .table-container table tbody tr td textarea {
+  background-color: black;
+  color: white;
+}
+body.dark-theme .table-container table tbody tr td textarea.form-control {
+  background-color: black;
+  color: white;
 }
 body.dark-theme .footer-wrapper footer ul.nav .nav-item .nav-link {
   color: white;

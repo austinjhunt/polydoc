@@ -28,7 +28,7 @@
             <div class="col-sm-8 table-container">
                 {% for doc in documents %}
                 <table id="doc-{{doc.id}}-table" data-docindex="{{forloop.counter}}"
-                    class="doc-table table table-secondary {% if forloop.counter != 1 %} d-none {% endif %}">
+                    class="doc-table table {% if forloop.counter != 1 %} d-none {% endif %}">
                     <thead>
                         <tr>
                             <th class="text-center">{{doc.title}}</th>
@@ -143,6 +143,12 @@
     let CSRF_TOKEN;
     let TOAST;
 
+    let hideLoaderAfterMillisecondDelay = (delay) => {
+        setTimeout(() => {
+            document.querySelector('.loader').classList.add('d-none');
+        }, delay);
+    }
+
     let saveAllDocumentNotes = () => {
         let docs = document.querySelectorAll('.multiview-document');
         let numDocs = docs.length;
@@ -198,7 +204,17 @@
                 }
             })
     }
-
+    let themifyTables = () => {
+        if (document.body.classList.contains('light-theme')) {
+            document.querySelectorAll('.doc-table').forEach((el, i) => {
+                el.classList.add('table-secondary');
+            })
+        } else {
+            document.querySelectorAll('.doc-table').forEach((el, i) => {
+                el.classList.remove('table-secondary');
+            })
+        }
+    }
     document.onreadystatechange = function () {
         if (document.readyState === "interactive") {
             var toastEl = document.querySelector(".toast");
@@ -206,7 +222,7 @@
 
             // autofocus the currently active notes textarea 
             document.querySelector('.tr-doc-page.table-active textarea').focus();
-
+            themifyTables();
             let themeToggleSwitch = document.getElementById("theme-toggle-switch");
             themeToggleSwitch.addEventListener("change", function () {
                 document.body.classList.toggle("light-theme");
@@ -220,10 +236,12 @@
                         "X-CSRFToken": CSRF_TOKEN,
                     },
                 })
-                    .then((response) => response.json());
+                    .then((response) => {
+                        themifyTables();
+                    });
             });
-
             prepareTooltips();
+            hideLoaderAfterMillisecondDelay(3000);
         }
     };
 

@@ -22,18 +22,34 @@ body.dark-theme {
       }
     }
   }
-
-  table {
-    tbody {
-      tr {
-        cursor: pointer;
-        &.table-active {
-          border-top: 5px solid yellow;
-          border-bottom: 5px solid yellow;
+  .table-container {
+    background-color: $semidark-cyan;
+    border-radius: 5px;
+    table {
+      color: white;
+      tbody {
+        tr {
+          cursor: pointer;
+          &.table-active {
+            border-top: 5px solid $dark-cyan-complement;
+            border-bottom: 5px solid $dark-cyan-complement;
+            color: $dark-cyan-complement;
+          }
+          td {
+            textarea {
+              background-color: black;
+              color: white;
+              &.form-control {
+                background-color: black;
+                color: white;
+              }
+            }
+          }
         }
       }
     }
   }
+
   .footer-wrapper {
     footer {
       ul.nav {
