@@ -86,7 +86,7 @@
                 }).then(response => response.json())
                     .then(response => {
                         // wait for successful update before closing notes
-                        var toast = document.querySelector('.toast');
+                        let toast = document.querySelector('.toast');
                         toast.querySelector('.toast-bold').textContent = 'Notes Updated';
                         toast.querySelector('.toast-when').textContent = 'Just Now';
                         toast.querySelector('.toast-body').textContent = response['result'];
@@ -113,7 +113,6 @@
                     btn.classList.toggle('btn-success');
                     btn.innerHTML = '<i class="fa fa-save"></i> Save Page Notes';
                     notesContainer.classList.toggle('active');
-
                 }
             }
             let focusDoc = (docId) => {

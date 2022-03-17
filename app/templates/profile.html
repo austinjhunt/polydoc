@@ -9,11 +9,11 @@
             <div class="rounded border-1 border p-4">
                 <div class="col-sm-12">
                     <span> Your document containers</span>
-                    <span class="float-end mx-1"><a class="btn btn-md btn-success"
+                    <span class="float-end mx-1"><a class="btn btn-sm btn-success"
                             href="{% url 'create-document-container' %}">
                             <i class="fa fa-plus fa-sm"></i>&nbsp;<i class="fa fa-box "></i> Add Container
                         </a></span>
-                    <span class="float-end mx-1"><a class="btn btn-md btn-success"
+                    <span class="float-end mx-1"><a class="btn btn-sm btn-success"
                             href="{% url 'import-google-drive-folder' %}" data-bs-toggle="tooltip"
                             title="Import a folder of documents from your Google Drive into a document container">
                             <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-box fa-sm "></i> Add Drive Folder
@@ -23,7 +23,7 @@
                 {% for dc in user_document_containers %}
                 <div class="col doc badge pill m-1 bg-secondary shadow">
                     <span>{{dc.name}} ({{dc.doc_count}} docs)</span>
-                    <span><a class="btn btn-dark btn-md" href="{% url 'multiview' dc.id %}" data-bs-toggle="tooltip"
+                    <span><a class="btn btn-dark btn-sm" href="{% url 'multiview' dc.id %}" data-bs-toggle="tooltip"
                             title="Simultaneously manage all documents in this container"><i class="fa fa-eye"></i><i
                                 class="fa fa-eye"></i> Multiview</a></span>
                     <span><a href="{% url 'update-document-container' dc.id %}" class="btn btn-success btn-sm"
@@ -47,7 +47,7 @@
                     <div class="col-sm-4 text-end">
                         <div class="d-inline text-end mb-3">
                             <a data-bs-toggle="tooltip" title="Upload documents into a container"
-                                class="btn btn-md btn-success" href="{% url 'create-document' %}">
+                                class="btn btn-sm btn-success" href="{% url 'create-document' %}">
                                 <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-file"></i> Add Docs
                             </a>
                         </div>

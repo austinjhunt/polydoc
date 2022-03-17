@@ -285,12 +285,17 @@ class DocumentSaveNotesView(LoginRequiredMixin, View):
                     print(e)
                     num_pages_failed += 1
 
+            if num_pages_failed == 0:
+                msg = f'Successfully saved notes for {num_pages_saved} pages'
+            else:
+                msg = (
+                    f'Successfully saved notes for {num_pages_saved} pages; '
+                    f'Failed to save notes for {num_pages_failed} pages'
+                )
+
             return JsonResponse(
                 {
-                    'result': (
-                        f'successfully saved {num_pages_saved} pages; '
-                        f'failed to save {num_pages_failed} pages'
-                    )
+                    'result': msg
                 }
             )
         else:

@@ -5,8 +5,9 @@
     <div class="row">
         <div class="col-sm-12 col-md-2">
             {% for doc in documents %}
-            <div class="multiview-document {% if forloop.counter == 1 %} active {% endif %}"
-                data-docindex="{{forloop.counter}}" data-currentpage="1" id="doc-{{doc.id}}">
+            <div class="multiview-document {% if forloop.counter == 1 %} active {% endif %}" data-bs-placement="right"
+                data-bs-toggle="tooltip" type="button" title="Click to bring this document into focus on the right"
+                data-docindex="{{forloop.counter}}" data-docid="{{doc.id}}" data-currentpage="1" id="doc-{{doc.id}}">
                 {% for page in doc.pages %}
                 <div class="card w-100 multiview-page border border-dark rounded {% if forloop.counter != 1 %} d-none {% endif %} "
                     data-pageindex="{{forloop.counter}}">
@@ -31,9 +32,19 @@
                     <thead>
                         <tr>
                             <th class="text-center">{{doc.title}}</th>
-                            <th class="text-end"><button onclick="saveDocumentNotes(`{{doc.id}}`);" role="button"
-                                    class="btn-success btn btn-md"><i class="fa fa-save fa-sm"></i> Save Doc
-                                    Notes</button></th>
+                            <th class="text-end">
+                                <button onclick="saveDocumentNotes({docID: `{{doc.id}}`, showToast: true});"
+                                    data-bs-placement="top" data-bs-toggle="tooltip"
+                                    title="Click to save notes for this document only (the below table)" role="button"
+                                    type="button" class="btn-success btn btn-md"><i class="fa fa-save fa-sm"></i> Save
+                                    Notes for
+                                    {{doc.title}}</button>
+                                <button type="button" class="btn btn-info btn-md" data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="Use the up and down arrows to move between documents; use the left and right arrows to move between pages on a document. When editing notes, be sure to save before leaving the page.">
+                                    <i class="fa fa-question fa-sm"></i> Help
+                                </button>
+                            </th>
                         </tr>
                         <tr>
                             <th class="text-center" scope="col">Page</th>
@@ -55,8 +66,8 @@
             </div>
             <div class="col-sm-4 preview-container">
                 {% for doc in documents %}
-                <div class="doc-preview {% if forloop.counter != 1 %} d-none {% endif %}" data-currentpage="1"
-                    data-docindex="{{forloop.counter}}" id="doc-{{doc.id}}-preview">
+                <div class="doc-preview position-fixed {% if forloop.counter != 1 %} d-none {% endif %}"
+                    data-currentpage="1" data-docindex="{{forloop.counter}}" id="doc-{{doc.id}}-preview">
                     {% for page in doc.pages %}
                     <div class="card w-100 multiview-page border border-dark rounded {% if forloop.counter != 1 %} d-none {% endif %} "
                         data-pageindex="{{forloop.counter}}">
@@ -70,6 +81,13 @@
                         </div>
                     </div>
                     {% endfor %}
+                    <div class="text-center">
+                        <button data-bs-placement="top" data-bs-toggle="tooltip"
+                            title="Click to save notes for all {{documents|length}} documents" type="button"
+                            class="btn btn-lg btn-success w-100" role="button" onclick="saveAllDocumentNotes()">
+                            <i class="fa fa-sm fa-save"></i> Save All Notes</button>
+                    </div>
+
                 </div>
                 {% endfor %}
             </div>
@@ -125,8 +143,34 @@
     let CSRF_TOKEN;
     let TOAST;
 
+    let saveAllDocumentNotes = () => {
+        let docs = document.querySelectorAll('.multiview-document');
+        let numDocs = docs.length;
+        let counter = 0;
+        docs.forEach((el, i) => {
+            let docid = el.dataset.docid;
+            saveDocumentNotes({
+                docID: docid,
+                showToast: false, // don't show toast for every single document 
+            }).then(response => {
+                counter += 1;
+                // show toast when done 
+                if (counter == numDocs) {
+                    let toast = document.querySelector('.toast');
+                    toast.querySelector('.toast-bold').textContent = 'Success';
+                    toast.querySelector('.toast-when').textContent = 'Just Now';
+                    toast.querySelector('.toast-body').textContent = `Notes updated for all ${numDocs} documents`;
+                    TOAST.show();
+                }
+            });
 
-    let saveDocumentNotes = (docID) => {
+        });
+
+    }
+
+    let saveDocumentNotes = async (props) => {
+        let docID = props.docID;
+        let showToast = props.showToast;
         // build JSON object representing all notes for this document  
         let data = {
             'pages': [...document.querySelectorAll(`#doc-${docID}-table tbody tr.tr-doc-page`)].map((el) => {
@@ -136,7 +180,7 @@
                 }
             })
         }
-        fetch(`/document/${docID}/save-notes/`, {
+        return fetch(`/document/${docID}/save-notes/`, {
             method: "POST",
             body: JSON.stringify(data),
             headers: {
@@ -145,7 +189,13 @@
         })
             .then(response => response.json())
             .then(data => {
-                console.log(data.result);
+                if (showToast) {
+                    let toast = document.querySelector('.toast');
+                    toast.querySelector('.toast-bold').textContent = 'Notes Updated';
+                    toast.querySelector('.toast-when').textContent = 'Just Now';
+                    toast.querySelector('.toast-body').textContent = data.result;
+                    TOAST.show(); // the Toast object corresponding to the above HTML element 
+                }
             })
     }
 
@@ -170,16 +220,24 @@
                         "X-CSRFToken": CSRF_TOKEN,
                     },
                 })
-                    .then((response) => response.json())
-                    .then((response) => console.log(response));
+                    .then((response) => response.json());
             });
 
-            document.querySelectorAll("a[data-bs-toggle]").forEach((el, index) => {
-                let tooltip = new bootstrap.Tooltip(el);
-            });
+            prepareTooltips();
         }
     };
 
+    let prepareTooltips = () => {
+        document.querySelectorAll("a[data-bs-toggle]").forEach((el, index) => {
+            let tooltip = new bootstrap.Tooltip(el);
+        });
+        document.querySelectorAll("button[data-bs-toggle]").forEach((el, index) => {
+            let tooltip = new bootstrap.Tooltip(el);
+        });
+        document.querySelectorAll("div[data-bs-toggle]").forEach((el, index) => {
+            let tooltip = new bootstrap.Tooltip(el);
+        });
+    }
     let updateCurrentPageForAllDocs = (newPageIndex) => {
         document.querySelectorAll(".multiview-document").forEach((el, index) => {
             el.dataset.currentpage = newPageIndex.toString();
@@ -200,7 +258,8 @@
         document.querySelectorAll(".tr-doc-page").forEach((trDocPage) => {
             if (trDocPage.dataset.pageindex == currentPageIndex.toString()) {
                 trDocPage.classList.add('table-active');
-                trDocPage.querySelector('textarea').focus();
+                let notes = trDocPage.querySelector('textarea')
+                notes.focus(); notes.scrollIntoView();
             } else { trDocPage.classList.remove('table-active') }
         });
     }
@@ -208,7 +267,6 @@
     function multiviewPreviousPage() {
         let firstDocument = document.querySelector(".multiview-document");
         let currentPageIndex = firstDocument.dataset.currentpage;
-        console.log(`currentPageIndex in multiviewPreviousPage = ${currentPageIndex}`);
         if (parseInt(currentPageIndex) - 1 >= 1) {
             currentPageIndex = Math.max(1, parseInt(currentPageIndex) - 1);
             showCurrentPageForAllDocs(currentPageIndex);
@@ -219,7 +277,6 @@
     function multiviewNextPage() {
         let firstDocument = document.querySelector(".multiview-document");
         let currentPageIndex = firstDocument.dataset.currentpage;
-        console.log(`currentPageIndex in multiviewNextPage = ${currentPageIndex}`);
         let maxPages = firstDocument.querySelectorAll(".multiview-page").length;
         if (parseInt(currentPageIndex) + 1 <= maxPages) {
             currentPageIndex = Math.min(maxPages, parseInt(currentPageIndex) + 1);
@@ -276,24 +333,13 @@
             // right arrow
             multiviewNextPage();
         } else if (e.keyCode == "38") {
-            // up, bring previous document into focus
-            console.log('bringing previous document into focus');
+            // up, bring previous document into focus 
             focusDocument('previous');
 
         } else if (e.keyCode == "40") {
-            //down, bring next document into focus
-            console.log('bringing next document into focus');
+            //down, bring next document into focus 
             focusDocument('next');
         }
-    }
-
-
+    } 
 </script>
-
-
-<div class="page-nav-buttons mb-5">
-    <button class="float-start d-inline btn btn-dark btn-lg" onclick="multiviewPreviousPage()">Previous</button>
-
-    <button class="float-end d-inline btn btn-dark btn-lg" onclick="multiviewNextPage()">Next</button>
-</div>
 {% endblock %}
