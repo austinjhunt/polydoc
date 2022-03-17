@@ -16,6 +16,22 @@ body.dark-theme {
     li.list-group-item {
       background-color: #aaa;
       color: black;
+      &.active {
+        background-color: #339;
+        color: lightgrey;
+      }
+    }
+  }
+
+  table {
+    tbody {
+      tr {
+        cursor: pointer;
+        &.table-active {
+          border-top: 5px solid yellow;
+          border-bottom: 5px solid yellow;
+        }
+      }
     }
   }
   .footer-wrapper {

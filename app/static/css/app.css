@@ -22,6 +22,17 @@ body.dark-theme ul.list-group li.list-group-item {
   background-color: #aaa;
   color: black;
 }
+body.dark-theme ul.list-group li.list-group-item.active {
+  background-color: #339;
+  color: lightgrey;
+}
+body.dark-theme table tbody tr {
+  cursor: pointer;
+}
+body.dark-theme table tbody tr.table-active {
+  border-top: 5px solid yellow;
+  border-bottom: 5px solid yellow;
+}
 body.dark-theme .footer-wrapper footer ul.nav .nav-item .nav-link {
   color: white;
 }

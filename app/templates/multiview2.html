@@ -1,0 +1,299 @@
+{% extends 'master.html' %}
+{% block content %}
+
+<div class="container-fluid py-3">
+    <div class="row">
+        <div class="col-sm-12 col-md-2">
+            {% for doc in documents %}
+            <div class="multiview-document {% if forloop.counter == 1 %} active {% endif %}"
+                data-docindex="{{forloop.counter}}" data-currentpage="1" id="doc-{{doc.id}}">
+                {% for page in doc.pages %}
+                <div class="card w-100 multiview-page border border-dark rounded {% if forloop.counter != 1 %} d-none {% endif %} "
+                    data-pageindex="{{forloop.counter}}">
+                    <div class="card-body">
+                        <div class="page-image">
+                            <img src="{{page.image.url}}" id="page-{{page.id}}-image" class="h-100 w-100">
+                        </div>
+                    </div>
+                    <div class="card-footer text-center ">
+                        {{doc.title}} - {{forloop.counter}} / {{doc.pages|length}}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col-sm-12 col-md-10 row">
+            <div class="col-sm-8 table-container">
+                {% for doc in documents %}
+                <table id="doc-{{doc.id}}-table" data-docindex="{{forloop.counter}}"
+                    class="doc-table table table-secondary {% if forloop.counter != 1 %} d-none {% endif %}">
+                    <thead>
+                        <tr>
+                            <th class="text-center">{{doc.title}}</th>
+                            <th class="text-end"><button onclick="saveDocumentNotes(`{{doc.id}}`);" role="button"
+                                    class="btn-success btn btn-md"><i class="fa fa-save fa-sm"></i> Save Doc
+                                    Notes</button></th>
+                        </tr>
+                        <tr>
+                            <th class="text-center" scope="col">Page</th>
+                            <th class="text-center" scope="col">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for page in doc.pages %}
+                        <tr class="align-middle text-center tr-doc-page {% if forloop.counter == 1 %} table-active {% endif %}"
+                            id="tr-doc-{{doc.id}}-page-{{page.id}}" data-pageid="{{page.id}}"
+                            data-pageindex="{{forloop.counter}}">
+                            <td>{{forloop.counter}}</td>
+                            <td><textarea class="w-100 form-control" rows="5">{{page.notes}}</textarea></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endfor %}
+            </div>
+            <div class="col-sm-4 preview-container">
+                {% for doc in documents %}
+                <div class="doc-preview {% if forloop.counter != 1 %} d-none {% endif %}" data-currentpage="1"
+                    data-docindex="{{forloop.counter}}" id="doc-{{doc.id}}-preview">
+                    {% for page in doc.pages %}
+                    <div class="card w-100 multiview-page border border-dark rounded {% if forloop.counter != 1 %} d-none {% endif %} "
+                        data-pageindex="{{forloop.counter}}">
+                        <div class="card-body">
+                            <div class="page-image">
+                                <img src="{{page.image.url}}" id="large-page-{{page.id}}-image" class="h-100 w-100">
+                            </div>
+                        </div>
+                        <div class="card-footer text-center ">
+                            {{doc.title}} - {{forloop.counter}} / {{doc.pages|length}}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+</div>
+<style>
+    .multiview-document {
+        position: relative;
+        max-width: 175px;
+        cursor: pointer;
+    }
+
+    .multiview-document.active .card {
+        background-color: rgb(132, 130, 238);
+    }
+
+    .document-multiview-right-panel {
+        position: relative;
+        width: auto;
+    }
+</style>
+
+<script>
+    let multiviewDocs = document.querySelectorAll('.multiview-document');
+    let docTables = document.querySelectorAll('.doc-table');
+    let docPreviews = document.querySelectorAll('.doc-preview');
+    multiviewDocs.forEach((el, index) => {
+        el.addEventListener('click', function (event) {
+            let targetID = event.currentTarget.id;
+            multiviewDocs.forEach((el, index) => {
+                if (el.id == targetID) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+            docTables.forEach((el, i) => {
+                if (el.id === `${targetID}-table`) {
+                    el.classList.remove('d-none');
+                } else { el.classList.add('d-none'); }
+            })
+            docPreviews.forEach((el, i) => {
+                if (el.id === `${targetID}-preview`) {
+                    el.classList.remove('d-none');
+                } else { el.classList.add('d-none'); }
+            })
+        }, false);
+    });
+
+
+    let CSRF_TOKEN;
+    let TOAST;
+
+
+    let saveDocumentNotes = (docID) => {
+        // build JSON object representing all notes for this document  
+        let data = {
+            'pages': [...document.querySelectorAll(`#doc-${docID}-table tbody tr.tr-doc-page`)].map((el) => {
+                return {
+                    'id': el.dataset.pageid,
+                    'notes': el.querySelector('textarea').value
+                }
+            })
+        }
+        fetch(`/document/${docID}/save-notes/`, {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "X-CSRFToken": CSRF_TOKEN,
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.result);
+            })
+    }
+
+    document.onreadystatechange = function () {
+        if (document.readyState === "interactive") {
+            var toastEl = document.querySelector(".toast");
+            TOAST = new bootstrap.Toast(toastEl);
+
+            // autofocus the currently active notes textarea 
+            document.querySelector('.tr-doc-page.table-active textarea').focus();
+
+            let themeToggleSwitch = document.getElementById("theme-toggle-switch");
+            themeToggleSwitch.addEventListener("change", function () {
+                document.body.classList.toggle("light-theme");
+                document.body.classList.toggle("dark-theme");
+                fetch("/toggle-theme/", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        current_theme: document.body.className,
+                    }),
+                    headers: {
+                        "X-CSRFToken": CSRF_TOKEN,
+                    },
+                })
+                    .then((response) => response.json())
+                    .then((response) => console.log(response));
+            });
+
+            document.querySelectorAll("a[data-bs-toggle]").forEach((el, index) => {
+                let tooltip = new bootstrap.Tooltip(el);
+            });
+        }
+    };
+
+    let updateCurrentPageForAllDocs = (newPageIndex) => {
+        document.querySelectorAll(".multiview-document").forEach((el, index) => {
+            el.dataset.currentpage = newPageIndex.toString();
+        })
+    }
+
+    let showCurrentPageForAllDocs = (currentPageIndex) => {
+        document.querySelectorAll(".multiview-page").forEach((page) => {
+            if (page.dataset.pageindex == currentPageIndex.toString()) {
+                page.classList.remove("d-none");
+            } else {
+                page.classList.add("d-none");
+            }
+        });
+    }
+
+    let updateActiveTableRow = (currentPageIndex) => {
+        document.querySelectorAll(".tr-doc-page").forEach((trDocPage) => {
+            if (trDocPage.dataset.pageindex == currentPageIndex.toString()) {
+                trDocPage.classList.add('table-active');
+                trDocPage.querySelector('textarea').focus();
+            } else { trDocPage.classList.remove('table-active') }
+        });
+    }
+
+    function multiviewPreviousPage() {
+        let firstDocument = document.querySelector(".multiview-document");
+        let currentPageIndex = firstDocument.dataset.currentpage;
+        console.log(`currentPageIndex in multiviewPreviousPage = ${currentPageIndex}`);
+        if (parseInt(currentPageIndex) - 1 >= 1) {
+            currentPageIndex = Math.max(1, parseInt(currentPageIndex) - 1);
+            showCurrentPageForAllDocs(currentPageIndex);
+            updateActiveTableRow(currentPageIndex);
+            updateCurrentPageForAllDocs(currentPageIndex);
+        }
+    }
+    function multiviewNextPage() {
+        let firstDocument = document.querySelector(".multiview-document");
+        let currentPageIndex = firstDocument.dataset.currentpage;
+        console.log(`currentPageIndex in multiviewNextPage = ${currentPageIndex}`);
+        let maxPages = firstDocument.querySelectorAll(".multiview-page").length;
+        if (parseInt(currentPageIndex) + 1 <= maxPages) {
+            currentPageIndex = Math.min(maxPages, parseInt(currentPageIndex) + 1);
+            showCurrentPageForAllDocs(currentPageIndex);
+            updateActiveTableRow(currentPageIndex);
+            updateCurrentPageForAllDocs(currentPageIndex);
+        }
+    }
+
+    let focusDocument = (direction) => {
+        let multiviewDocs = document.querySelectorAll('.multiview-document');
+        let docTables = document.querySelectorAll('.doc-table');
+        let docPreviews = document.querySelectorAll('.doc-preview');
+        let currentDocIndex = document.querySelector('.multiview-document.active').dataset.docindex;
+        let numDocTables = docTables.length;
+        let newIndex; let condition;
+        if (direction === 'next') {
+            newIndex = parseInt(currentDocIndex) + 1;
+            condition = newIndex <= numDocTables;
+        } else if (direction === 'previous') {
+            newIndex = parseInt(currentDocIndex) - 1;
+            condition = newIndex >= 1
+        }
+        if (condition) {
+            currentDocIndex = newIndex;
+            multiviewDocs.forEach((el, index) => {
+                if (el.dataset.docindex == currentDocIndex) {
+                    el.classList.add('active');
+                } else { el.classList.remove('active'); }
+            })
+            docTables.forEach((docTable, index) => {
+                if (docTable.dataset.docindex == currentDocIndex) {
+                    docTable.classList.remove('d-none');
+                } else {
+                    docTable.classList.add('d-none');
+                }
+            });
+            docPreviews.forEach((docPreview, index) => {
+                if (docPreview.dataset.docindex == currentDocIndex) {
+                    docPreview.classList.remove('d-none');
+                } else {
+                    docPreview.classList.add('d-none');
+                }
+            });
+        }
+    }
+    document.onkeydown = checkKey;
+    function checkKey(e) {
+        e = e || window.event;
+        if (e.keyCode == "37") {
+            // left arrow
+            multiviewPreviousPage();
+        } else if (e.keyCode == "39") {
+            // right arrow
+            multiviewNextPage();
+        } else if (e.keyCode == "38") {
+            // up, bring previous document into focus
+            console.log('bringing previous document into focus');
+            focusDocument('previous');
+
+        } else if (e.keyCode == "40") {
+            //down, bring next document into focus
+            console.log('bringing next document into focus');
+            focusDocument('next');
+        }
+    }
+
+
+</script>
+
+
+<div class="page-nav-buttons mb-5">
+    <button class="float-start d-inline btn btn-dark btn-lg" onclick="multiviewPreviousPage()">Previous</button>
+
+    <button class="float-end d-inline btn btn-dark btn-lg" onclick="multiviewNextPage()">Next</button>
+</div>
+{% endblock %}
