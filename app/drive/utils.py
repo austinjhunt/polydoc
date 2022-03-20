@@ -47,7 +47,7 @@ class DriveAPI:
                     'credentials.json', self.scopes) #,
                 #    redirect_uri="http://localhost:8000/hello")
                 #self.creds = flow.credentials.to_json()
-                self.creds = flow.run_local_server(port=50005)
+                self.creds = flow.run_local_server(port=50005, host="poly-doc.herokuapp.com")
 
             # Save the access token in token.pickle
             # file for future usage
