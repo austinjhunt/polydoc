@@ -44,11 +44,14 @@ class DriveAPI:
                 self.creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', self.scopes,
-                     redirect_uri="https://poly-doc.herokuapp.com/profile")
+                    'credentials.json', self.scopes)#,
+                #     redirect_uri="https://poly-doc.herokuapp.com/profile")
                 #    redirect_uri="http://localhost:8000/hello")
                 #self.creds = flow.credentials.to_json()
-                self.creds = flow.run_local_server(port=50005)
+                self.creds = flow.run_local_server(port=50005, open_browser=True)
+                #flow.authorization_url()
+                #flow.fetch_token()
+                #self.creds = flow.credentials()
 
             # Save the access token in token.pickle
             # file for future usage
