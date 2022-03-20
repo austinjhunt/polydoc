@@ -48,7 +48,7 @@ class DriveAPI:
                 #     redirect_uri="https://poly-doc.herokuapp.com/profile")
                 #    redirect_uri="http://localhost:8000/hello")
                 #self.creds = flow.credentials.to_json()
-                self.creds = flow.run_local_server(port=8000, open_browser=True)
+                self.creds = flow.run_local_server(host="https://poly-doc.herokuapp.com/", port=8000, open_browser=True)
                 #flow.authorization_url()
                 #flow.fetch_token()
                 #self.creds = flow.credentials()
