@@ -43,6 +43,15 @@
           <li class="nav-item">
             <a class="nav-link disabled" href="#">{{user.username}}</a>
           </li>
+          {% if user.drive_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link disabled" href="#">Connected to Drive</a>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'drive' %}">Connect to Drive</a>
+          </li>
+          {% endif %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'profile' %}">My Profile</a>
           </li>

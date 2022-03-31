@@ -4,7 +4,7 @@ from .drive.utils import DriveAPI
 from django.forms import ValidationError
 from .forms import DocumentUploadForm, UserLoginForm, UserCreateForm, DocumentContainerForm
 from django.shortcuts import redirect, render
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, JsonResponse, HttpResponseRedirect
 from django.views.generic import View, FormView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.views import LoginView
@@ -12,9 +12,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from pdf2image import convert_from_path
 from django.conf import settings
 from django.db.models import Count
+from django.forms.models import model_to_dict
+from django.core import serializers
+
+
 import os
 import json
-
 
 class HomeView(View):
     def get(self, request):
@@ -126,6 +129,40 @@ class ProfileView(LoginRequiredMixin, FormView):
         )
 
 
+class DriveView(LoginRequiredMixin, View):
+
+    def get(self, request):
+        driveAPI = DriveAPI()
+        if not driveAPI.creds:
+            url = driveAPI.get_authorization_url()[0]
+            print(url)
+            return HttpResponseRedirect(url)
+        else:
+            #request.session['creds'] = driveAPI.creds
+            return redirect('profile')
+        #flowData = serializers.serialize('json', [driveAPI.flow,])
+        #flowStruct = json.loads(flowData)
+        #flowData = json.dumps(flowStruct[0])
+       # flowDict = model_to_dict(driveAPI.flow)
+        #request.session['flow'] = json.dumps(flowData)
+        #driveDict = model_to_dict(driveAPI)
+        #request.session['driveAPI'] = json.dumps(driveDict)
+
+class AuthView(LoginRequiredMixin, View):
+
+    def get(self, request):
+        driveAPI = DriveAPI()
+        code=request.GET['code']
+        print(f"code: {code}")
+        driveAPI.authenticate(code)
+
+        request.session['creds'] = driveAPI.creds
+
+        #driveDict = model_to_dict(driveAPI)
+        #request.session['driveAPI'] = json.dumps(driveDict)
+        return redirect('profile')
+
+
 class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
     model = DocumentContainer
     form_class = DocumentContainerForm
@@ -143,6 +180,7 @@ class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
 
 
 class DocumentContainerImportView(LoginRequiredMixin, CreateView):
+
     model = DocumentContainer
     form_class = DocumentContainerForm
     success_url = 'profile'
@@ -157,6 +195,11 @@ class DocumentContainerImportView(LoginRequiredMixin, CreateView):
             user=self.request.user
         )
         document_container.save()
+
+        # Get drive API instance from authentication, or return error (todo)
+        #drive = request.session['driveAPI'].lo
+        #if not drive.connected:
+        #    print(f"Error, driveAPI has not been connected")
 
         drive = DriveAPI()
         folder_id = drive.get_folder_id(folder_name)

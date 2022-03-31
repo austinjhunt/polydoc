@@ -10,8 +10,10 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from googleapiclient.errors import HttpError
 
-
 class DriveAPI:
+
+    connected = False
+
     def __init__(self):
         self.scopes = ['https://www.googleapis.com/auth/drive']
 
@@ -43,13 +45,51 @@ class DriveAPI:
             if self.creds and self.creds.expired and self.creds.refresh_token:
                 self.creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', self.scopes)#,
+                self.flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', self.scopes,
                 #     redirect_uri="https://poly-doc.herokuapp.com/profile")
-                #    redirect_uri="http://localhost:8000/hello")
+                    redirect_uri="http://localhost:8000/authenticate")
                 #self.creds = flow.credentials.to_json()
-                print(flow.authorization_url())
-                self.creds = flow.run_local_server(port=50005, open_browser=True)
+                return
+                '''print(self.flow.authorization_url())
+                self.creds = self.flow.run_local_server(port=50005)
+                #flow.fetch_token()
+                #self.creds = flow.credentials()
+                print("Done authenticating")
+                '''
+
+            # Save the access token in token.pickle
+            # file for future usage
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(self.creds, token)
+
+        # Connect to the API service
+        self.service = build('drive', 'v3', credentials=self.creds)
+        self.connected = True
+
+    def authenticate(self, code):
+        if not self.creds or not self.creds.valid:
+            # If token is expired, it will be refreshed,
+            # else, we will request a new one.
+            if self.creds and self.creds.expired and self.creds.refresh_token:
+                self.creds.refresh(Request())
+            else:
+                self.flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', self.scopes,
+                #     redirect_uri="https://poly-doc.herokuapp.com/profile")
+                    redirect_uri="http://localhost:8000/authenticate")
+    
+                authorization_response = "https://localhost:8000/profile"
+
+                print(f"authorization_response: {authorization_response}\ncode: {code}")
+                token = self.flow.fetch_token(authorization_response=authorization_response, code=code)
+                print(f"token: {token}")
+
+                session = self.flow.authorized_session()
+                print(f"session: {session.credentials}")
+
+                #self.creds = self.flow.run_local_server(port=50005)
+                self.creds = session.credentials
                 #flow.fetch_token()
                 #self.creds = flow.credentials()
                 print("Done authenticating")
@@ -59,8 +99,13 @@ class DriveAPI:
             with open('token.pickle', 'wb') as token:
                 pickle.dump(self.creds, token)
 
-        # Connect to the API service
+        print(f"Creds: {self.creds}")
         self.service = build('drive', 'v3', credentials=self.creds)
+        self.connected = True
+
+    def get_authorization_url(self):
+        if not self.connected:
+            return self.flow.authorization_url()
 
     def get_file(self, file_id, file_path, file_name):
         #response = self.service.files().get_media(fileId=file_id)
