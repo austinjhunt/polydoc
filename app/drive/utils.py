@@ -80,7 +80,8 @@ class DriveAPI:
                     'credentials.json', self.scopes,
                 #     redirect_uri="https://poly-doc.herokuapp.com/profile")
                     redirect_uri="http://localhost:8000/authenticate")
-    
+                # TODO: Make this changeable from a config ^
+
                 authorization_response = "https://localhost:8000/profile"
 
                 print(f"authorization_response: {authorization_response}\ncode: {code}")
@@ -168,10 +169,10 @@ class DriveAPI:
         return files_in_folder
 
     def get_folder_id(self, folder_name):
-        if self.service = None:
+        if self.service == None:
             print("App not authenticated")
             return "0"
-        
+
         response = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                                              fields='nextPageToken, files(id, name)').execute()
         print(response.get('files'))
