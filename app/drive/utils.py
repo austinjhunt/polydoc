@@ -48,7 +48,9 @@ class DriveAPI:
                 self.flow = InstalledAppFlow.from_client_secrets_file(
                     'credentials.json', self.scopes,
                 #     redirect_uri="https://poly-doc.herokuapp.com/profile")
-                    redirect_uri="http://localhost:8000/authenticate")
+                #    redirect_uri="http://localhost:8000/authenticate")
+                    redirect_uri="https://poly-doc.herokuapp.com:50005/authenticate")
+
                 #self.creds = flow.credentials.to_json()
                 return
                 '''print(self.flow.authorization_url())
@@ -145,6 +147,7 @@ class DriveAPI:
     def get_folder_list(self, folder_id):
         files_in_folder = []
         page_token = None
+
         while True:
             response = self.service.files().list(q=f"'{folder_id}' in parents",
                                                  pageSize=100,
@@ -165,6 +168,10 @@ class DriveAPI:
         return files_in_folder
 
     def get_folder_id(self, folder_name):
+        if self.service = None:
+            print("App not authenticated")
+            return "0"
+        
         response = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                                              fields='nextPageToken, files(id, name)').execute()
         print(response.get('files'))
