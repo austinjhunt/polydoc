@@ -1,26 +1,32 @@
-import os.path
 import pickle
 import shutil
 import io
-
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
-from googleapiclient.errors import HttpError
+from django.conf import settings
+import os
+import json
+import requests
 
 class DriveAPI:
 
-    connected = False
 
-    def __init__(self):
+    def __init__(self, request):
+        self.connected = False
+        self.secrets_from_json = None
+        self._init_secrets_from_json()
+        self.code = None
+        self.request = request
+        self.user_id = request.user.id
+        self.flow = None
+        self.token_folder = f'{settings.GOOGLE_DRIVE_FOLDER}/tokens'
+        self._ensure_folder_exists(self.token_folder)
+        self.token_file = f'{self.token_folder}/user-{self.user_id}.pickle'
         self.scopes = ['https://www.googleapis.com/auth/drive']
-
-        # Variable self.creds will
-        # store the user access token.
-        # If no valid token found
-        # we will create one.
+        # Access token for drive resource access
         self.creds = None
 
         # The file token.pickle stores the
@@ -28,81 +34,80 @@ class DriveAPI:
         # created automatically when the authorization
         # flow completes for the first time.
 
-        # Check if file token.pickle exists
-        if os.path.exists('token.pickle'):
+        if os.path.exists(self.token_file):
+            self.load_creds_from_file()
 
-            # Read the token from the file and
-            # store it in the variable self.creds
-            with open('token.pickle', 'rb') as token:
+    def _init_secrets_from_json(self):
+        with open(settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE, 'r') as f:
+            self.secrets_from_json = dict(json.load(f))['web']
+
+    def _ensure_folder_exists(self, path):
+        """ Given a path to a folder, ensure it exists"""
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+    def authorize(self,code=None):
+        """ Update drive credentials for user """
+        if self.creds and self.creds.expired and self.creds.refresh_token:
+            # token expired so refresh
+            self.creds.refresh(Request())
+        else:
+            if not code:
+                # request a new token ; this will trigger AuthView which updates request.session['drivecode']
+                # redirects user to google's auth endpoint which redirects to login
+                # they login and then are redirected back to this app's auth view with a code
+                # which can be used one time to obtain a token
+                self.flow = InstalledAppFlow.from_client_secrets_file(
+                    settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE, self.scopes,
+                    redirect_uri=settings.GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI,
+                    )
+            else:
+                # request a new token ; this will trigger AuthView which updates request.session['drivecode']
+                response = self.fetch_token(code=code)
+                self.creds = Credentials(
+                    token=response['access_token'],
+                    refresh_token=response['refresh_token'],
+                    token_uri=self.secrets_from_json['token_uri'],
+                    client_id=self.secrets_from_json['client_id'],
+                    client_secret=self.secrets_from_json['client_secret'],
+                    scopes=self.scopes
+                    )
+                self.save_creds_to_file()
+
+    def fetch_token(self, code=None, ):
+        """ Custom POST request to fetch a token from token endpoint in Google auth """
+        token_endpoint = self.secrets_from_json['token_uri']
+        data = {
+            'code': code,
+            'redirect_uri': settings.GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI,
+            'grant_type': 'authorization_code'
+        }
+        auth = (
+            self.secrets_from_json['client_id'],
+            self.secrets_from_json['client_secret'],
+        )
+        return requests.post(token_endpoint, data=data, auth=auth).json()
+
+
+    def load_creds_from_file(self):
+        # Read the token from the file and
+        # store it in the variable self.creds
+        if os.path.exists(self.token_file):
+            with open(self.token_file, 'rb') as token:
                 self.creds = pickle.load(token)
 
-        # If no valid credentials are available,
-        # request the user to log in.
-        if not self.creds or not self.creds.valid:
+    def save_creds_to_file(self):
+        """ Save the current access token in pickle file for future usage """
+        with open(self.token_file, 'wb') as token:
+            pickle.dump(self.creds, token)
 
-            # If token is expired, it will be refreshed,
-            # else, we will request a new one.
-            if self.creds and self.creds.expired and self.creds.refresh_token:
-                self.creds.refresh(Request())
-            else:
-                self.flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', self.scopes,
-                #     redirect_uri="https://poly-doc.herokuapp.com/profile")
-                #    redirect_uri="http://localhost:8000/authenticate")
-                    redirect_uri="https://poly-doc.herokuapp.com:50005/authenticate")
+    def has_valid_creds(self):
+        """ set default to invalid """
+        self.load_creds_from_file()
+        return self.creds is not None and self.creds.valid
 
-                #self.creds = flow.credentials.to_json()
-                return
-                '''print(self.flow.authorization_url())
-                self.creds = self.flow.run_local_server(port=50005)
-                #flow.fetch_token()
-                #self.creds = flow.credentials()
-                print("Done authenticating")
-                '''
 
-            # Save the access token in token.pickle
-            # file for future usage
-            with open('token.pickle', 'wb') as token:
-                pickle.dump(self.creds, token)
-
-        # Connect to the API service
-        self.service = build('drive', 'v3', credentials=self.creds)
-        self.connected = True
-
-    def authenticate(self, code):
-        if not self.creds or not self.creds.valid:
-            # If token is expired, it will be refreshed,
-            # else, we will request a new one.
-            if self.creds and self.creds.expired and self.creds.refresh_token:
-                self.creds.refresh(Request())
-            else:
-                self.flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', self.scopes,
-                #     redirect_uri="https://poly-doc.herokuapp.com/profile")
-                    redirect_uri="http://localhost:8000/authenticate")
-                # TODO: Make this changeable from a config ^
-
-                authorization_response = "https://localhost:8000/profile"
-
-                print(f"authorization_response: {authorization_response}\ncode: {code}")
-                token = self.flow.fetch_token(authorization_response=authorization_response, code=code)
-                print(f"token: {token}")
-
-                session = self.flow.authorized_session()
-                print(f"session: {session.credentials}")
-
-                #self.creds = self.flow.run_local_server(port=50005)
-                self.creds = session.credentials
-                #flow.fetch_token()
-                #self.creds = flow.credentials()
-                print("Done authenticating")
-
-            # Save the access token in token.pickle
-            # file for future usage
-            with open('token.pickle', 'wb') as token:
-                pickle.dump(self.creds, token)
-
-        print(f"Creds: {self.creds}")
+    def connect_drive_service(self):
         self.service = build('drive', 'v3', credentials=self.creds)
         self.connected = True
 
@@ -208,6 +213,6 @@ for f in range(0, len(items)):
                 status, done = downloader.next_chunk()
     fh.seek(0)
     fhContents = fh.read()
-    
+
     baseImage = cv2.imdecode(np.fromstring(fhContents, dtype=np.uint8), cv2.IMREAD_COLOR)
 '''

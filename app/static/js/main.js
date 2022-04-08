@@ -36,7 +36,9 @@ multiviewDocs.forEach((el, index) => {
 
 let hideLoaderAfterMillisecondDelay = (delay) => {
   setTimeout(() => {
-    document.querySelector(".loader").classList.add("d-none");
+    try {
+      document.querySelector(".loader").classList.add("d-none");
+    } catch (err) {}
   }, delay);
 };
 

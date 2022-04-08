@@ -22,10 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-sd$tg!cxostzu^rn=nvha7-n5(k845tuvgsi@g4ao!+q9po311'
 
-# SECURITY WARNING: don't run with debug turned on in production! 
-DEBUG = not ('PRODUCTION' in os.environ) 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = not ('PRODUCTION' in os.environ)
 
 ALLOWED_HOSTS = []
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 
 # Application definition
@@ -36,10 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles','django_browser_reload',
     'app',
+    'tailwindapp',
+    'tailwind',
     'compressor'
 ]
+# Tailwind CSS (pip install django-tailwind)
+TAILWIND_APP_NAME = 'tailwindapp'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -49,6 +56,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_browser_reload.middleware.BrowserReloadMiddleware',
+
 ]
 
 ROOT_URLCONF = 'polydoc.urls'
@@ -64,7 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'app.context.theme_context' 
+                'app.context.theme_context'
             ],
         },
     },
@@ -100,7 +109,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
-]  
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -122,7 +131,7 @@ STATIC_ROOT = f'{BASE_DIR}/staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = f'{BASE_DIR}/media'
 
-# Testing 
+# Testing
 TEST_ROOT = f'{BASE_DIR}/app/tests'
 
 STATICFILES_FINDERS = (
@@ -137,13 +146,15 @@ STATICFILES_FINDERS = (
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
+GOOGLE_DRIVE_FOLDER = f'{BASE_DIR}/google-drive'
+GOOGLE_DRIVE_CREDENTIALS_JSON_FILE = f'{BASE_DIR}/drive/credentials.json'
+GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI = 'http://localhost:8000/drive/authenticate' if DEBUG else 'https://poly-doc.herokuapp.com/drive/authenticate'
+GOOGLE_DRIVE_AUTHORIZATION_RESPONSE_URI = 'http://localhost:8000/profile' if DEBUG else 'https://poly-doc.herokuapp.com/profile'
 # Only use heroku configuration if application currently running on heroku
 if 'APPLICATION_ON_HEROKU' in os.environ:
-    # Configure Django App for Heroku. 
+    # Configure Django App for Heroku.
     import django_heroku
-    django_heroku.settings(locals()) 
+    django_heroku.settings(locals())
     print('using heroku database')
 else:
     print('using local sqlite3 database')

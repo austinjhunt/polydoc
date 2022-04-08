@@ -1,7 +1,7 @@
 {% extends 'master.html' %}
 {% block content %}
-<div class="container p-5 text-center">
-    <div class="card" style="width: 18rem; margin:0 auto;">
+<div class="container p-5 text-center rounded my-4 md:flex align-center justify-center">
+    <div class="card  bg-slate-100 rounded-xl p-8 md:p-0 dark:bg-slate-800">
         <div class="card-body">
             <h5 class="card-title">Log In</h5>
             <form method="post" action="{% url 'login' %}">

@@ -14,8 +14,6 @@ from django.conf import settings
 from django.db.models import Count
 from django.forms.models import model_to_dict
 from django.core import serializers
-
-
 import os
 import json
 
@@ -130,36 +128,25 @@ class ProfileView(LoginRequiredMixin, FormView):
 
 
 class DriveView(LoginRequiredMixin, View):
-
     def get(self, request):
-        driveAPI = DriveAPI()
-        if not driveAPI.creds:
+        print('drive view')
+        driveAPI = DriveAPI(request=request)
+        print(f'drive API created')
+        if not driveAPI.has_valid_creds():
+            print(f'drive API does not have valid creds; calling authorize()')
+            driveAPI.authorize()
+            request.session['creds'] = driveAPI.creds
             url = driveAPI.get_authorization_url()[0]
-            print(url)
             return HttpResponseRedirect(url)
         else:
-            #request.session['creds'] = driveAPI.creds
-            return redirect('profile')
-        #flowData = serializers.serialize('json', [driveAPI.flow,])
-        #flowStruct = json.loads(flowData)
-        #flowData = json.dumps(flowStruct[0])
-       # flowDict = model_to_dict(driveAPI.flow)
-        #request.session['flow'] = json.dumps(flowData)
-        #driveDict = model_to_dict(driveAPI)
-        #request.session['driveAPI'] = json.dumps(driveDict)
+             return redirect('profile')
 
-class AuthView(LoginRequiredMixin, View):
-
+class DriveCallbackView(LoginRequiredMixin, View):
     def get(self, request):
-        driveAPI = DriveAPI()
-        code=request.GET['code']
-        print(f"code: {code}")
-        driveAPI.authenticate(code)
-
-        request.session['creds'] = driveAPI.creds
-
-        #driveDict = model_to_dict(driveAPI)
-        #request.session['driveAPI'] = json.dumps(driveDict)
+        driveAPI = DriveAPI(request=request)
+        print('callback uri view')
+        print(f'code = {request.GET["code"]}')
+        driveAPI.authorize(code=request.GET['code'])
         return redirect('profile')
 
 
@@ -406,7 +393,7 @@ class DocumentCreateView(LoginRequiredMixin, View):
 
 class MultiView(LoginRequiredMixin, View):
     def get(self, request, container_id):
-        """ Multiview - simultaneous view of all docs in a 
+        """ Multiview - simultaneous view of all docs in a
         document container whose id is given by pk path param """
         container = DocumentContainer.objects.get(id=container_id)
         docs = Document.objects.filter(containers__in=[container])
