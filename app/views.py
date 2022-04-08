@@ -146,6 +146,7 @@ class DriveCallbackView(LoginRequiredMixin, View):
         driveAPI = DriveAPI(request=request)
         print('callback uri view')
         print(f'code = {request.GET["code"]}')
+        print('calling authorize(code=...)')
         driveAPI.authorize(code=request.GET['code'])
         return redirect('profile')
 

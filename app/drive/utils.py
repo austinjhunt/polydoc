@@ -67,9 +67,13 @@ class DriveAPI:
                 response = self.fetch_token(code=code)
                 print(f'response from fetch token = {response}')
                 try:
+                    if 'refresh_token' in response:
+                        refresh_token = response['refresh_token']
+                    else:
+                        refresh_token = None
                     self.creds = Credentials(
                         token=response['access_token'],
-                        refresh_token=response['refresh_token'],
+                        refresh_token=refresh_token,
                         token_uri=self.secrets_from_json['token_uri'],
                         client_id=self.secrets_from_json['client_id'],
                         client_secret=self.secrets_from_json['client_secret'],
