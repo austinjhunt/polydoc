@@ -62,17 +62,23 @@ class DriveAPI:
                     redirect_uri=settings.GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI,
                     )
             else:
+                print('code provided; fetching token with code')
                 # request a new token ; this will trigger AuthView which updates request.session['drivecode']
                 response = self.fetch_token(code=code)
-                self.creds = Credentials(
-                    token=response['access_token'],
-                    refresh_token=response['refresh_token'],
-                    token_uri=self.secrets_from_json['token_uri'],
-                    client_id=self.secrets_from_json['client_id'],
-                    client_secret=self.secrets_from_json['client_secret'],
-                    scopes=self.scopes
-                    )
-                self.save_creds_to_file()
+                print(f'response from fetch token = {response}')
+                try:
+                    self.creds = Credentials(
+                        token=response['access_token'],
+                        refresh_token=response['refresh_token'],
+                        token_uri=self.secrets_from_json['token_uri'],
+                        client_id=self.secrets_from_json['client_id'],
+                        client_secret=self.secrets_from_json['client_secret'],
+                        scopes=self.scopes
+                        )
+                    self.save_creds_to_file()
+                except Exception as e:
+                    print(e)
+
 
     def fetch_token(self, code=None, ):
         """ Custom POST request to fetch a token from token endpoint in Google auth """
@@ -86,6 +92,9 @@ class DriveAPI:
             self.secrets_from_json['client_id'],
             self.secrets_from_json['client_secret'],
         )
+        print(f'fetching token')
+        print(f' data={data}')
+        print(f'client id = {self.secrets_from_json["client_id"][:6]}...')
         return requests.post(token_endpoint, data=data, auth=auth).json()
 
 
