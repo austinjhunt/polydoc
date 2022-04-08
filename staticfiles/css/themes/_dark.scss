@@ -1,0 +1,64 @@
+body.dark-theme {
+  background-color: $dark-cyan;
+  color: white;
+  .navbar {
+    background-color: black;
+  }
+  .footer-wrapper {
+    background-color: black;
+    color: white;
+  }
+  .card {
+    background-color: #aaa;
+    color: black;
+  }
+  ul.list-group {
+    li.list-group-item {
+      background-color: #aaa;
+      color: black;
+      &.active {
+        background-color: #339;
+        color: lightgrey;
+      }
+    }
+  }
+  .table-container {
+    background-color: $semidark-cyan;
+    border-radius: 5px;
+    table {
+      color: white;
+      tbody {
+        tr {
+          cursor: pointer;
+          &.table-active {
+            border-top: 5px solid $dark-cyan-complement;
+            border-bottom: 5px solid $dark-cyan-complement;
+            color: $dark-cyan-complement;
+          }
+          td {
+            textarea {
+              background-color: black;
+              color: white;
+              &.form-control {
+                background-color: black;
+                color: white;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .footer-wrapper {
+    footer {
+      ul.nav {
+        .nav-item {
+          .nav-link {
+            color: white;
+          }
+        }
+      }
+    }
+  }
+}
