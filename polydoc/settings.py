@@ -25,7 +25,9 @@ SECRET_KEY = 'django-insecure-sd$tg!cxostzu^rn=nvha7-n5(k845tuvgsi@g4ao!+q9po311
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = not ('PRODUCTION' in os.environ)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "poly-doc.herokuapp.com"
+]
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
