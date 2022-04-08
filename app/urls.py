@@ -34,7 +34,7 @@ urlpatterns = [
     # POST endpoint requires trailing slash for ajax call
     path('toggle-theme/', views.ToggleThemeView.as_view(), name='toggle-theme'),
     path('page-notes/<slug:pk>/', views.PageNotesEditView.as_view(), name='edit-page-notes')
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 
 # def fake(request):

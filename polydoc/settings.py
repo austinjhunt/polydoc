@@ -22,15 +22,50 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-sd$tg!cxostzu^rn=nvha7-n5(k845tuvgsi@g4ao!+q9po311'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = not ('PRODUCTION' in os.environ)
+ADMINS = [('huntaj@cofc.edu', 'Austin Hunt')]
 
 ALLOWED_HOSTS = [
-    "poly-doc.herokuapp.com"
+    "poly-doc.herokuapp.com",
+    "localhost"
 ]
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt' : "%d/%b/%Y %H:%M:%S"
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'mysite.log',
+            'formatter': 'verbose'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers':['file'],
+            'propagate': True,
+            'level':'DEBUG',
+        },
+        'MYAPP': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+        },
+    }
+}
+
 
 
 # Application definition
@@ -132,15 +167,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
-)
-STATIC_ROOT = f'{BASE_DIR}/staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Simplified static file serving.
 # https://warehouse.python.org/project/whitenoise/
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+COMPRESS_ENABLED = True
+COMPRESS_ROOT = STATIC_ROOT
+COMPRESS_OFFLINE = True
+COMPRESS_OUTPUT_DIR = 'staticfiles'
+COMPRESS_CSS_FILTERS = ["compressor.filters.cssmin.CSSMinFilter"]
 
 # Testing
 TEST_ROOT = f'{BASE_DIR}/app/tests'
