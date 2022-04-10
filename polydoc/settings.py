@@ -11,10 +11,16 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+if os.path.exists(f'{BASE_DIR}/.env'):
+    load_dotenv()  # take environment variables from .env.
+
+# Code of your application, which uses environment variables (e.g. from `os.environ` or
+# `os.getenv`) as if they came from the actual environment.
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -78,7 +84,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles','django_browser_reload',
     'app',
-    'compressor'
+    'compressor',
+    'storages'
 ]
 
 MIDDLEWARE = [
@@ -185,7 +192,12 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-
+if not DEBUG: # production
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', None)
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', None)
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', None)
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    print(f'DEFAULT_FILE_STORAGE={DEFAULT_FILE_STORAGE}')
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
@@ -202,3 +214,4 @@ if 'APPLICATION_ON_HEROKU' in os.environ:
     print('using heroku database')
 else:
     print('using local sqlite3 database')
+

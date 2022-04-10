@@ -1,0 +1,19 @@
+@import "./includes/colors";
+@import "./includes/nav";
+@import "./includes/loader";
+@import "./themes/dark";
+@import "./themes/light";
+@import "./includes/multiview";
+@import "./includes/animation";
+
+body {
+  transition: 0.3s linear;
+}
+.google-drive-loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+}

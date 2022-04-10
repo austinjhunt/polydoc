@@ -1,6 +1,12 @@
 body.dark-theme {
   background-color: $dark-cyan;
   color: white;
+  .google-drive-loading-screen {
+    background-color: darkslategrey;
+    h1 {
+      color: white;
+    }
+  }
   .navbar {
     background-color: black;
   }

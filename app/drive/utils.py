@@ -5,14 +5,14 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
+from django.core.files.storage import default_storage
+from googleapiclient.http import MediaIoBaseDownload
 from django.conf import settings
 import os
 import json
 import requests
 
 class DriveAPI:
-
 
     def __init__(self, request):
         self.connected = False
@@ -103,9 +103,6 @@ class DriveAPI:
             self.secrets_from_json['client_id'],
             self.secrets_from_json['client_secret'],
         )
-        print(f'fetching token')
-        print(f' data={data}')
-        print(f'client id = {self.secrets_from_json["client_id"][:6]}...')
         return requests.post(token_endpoint, data=data, auth=auth).json()
 
 
@@ -153,7 +150,6 @@ class DriveAPI:
     def _get_file(self, file_id):
         """ Simply get a file (fallback in case export operation fails) """
         response = self.service.files().get_media(fileId=file_id)
-        print(response.to_json())
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, response, chunksize=204800)
         done = False
@@ -162,6 +158,8 @@ class DriveAPI:
         return fh
 
     def download_file_as_pdf(self, file_id, parent_folder_path, file_name):
+        """ Download a Drive file as a PDF"""
+        print(f'Downloading file to parent_folder_path={parent_folder_path}, file_name={file_name}')
         #response = self.service.files().get_media(fileId=file_id)
         success = False
         print(f'Downloading file with id={file_id}')
@@ -169,18 +167,18 @@ class DriveAPI:
         try:
             fh = self._export_file_as_pdf(file_id)
         except Exception as e:
-            print('export file only works for Doc Editor files; fallback to "get file"')
+            print('Export failed for file; falling back to "get file"')
         try:
             fh = self._get_file(file_id)
         except Exception as e:
             print(e)
         if fh:
             fh.seek(0)
-            if not os.path.exists( parent_folder_path):
-                os.makedirs( parent_folder_path)
-            # Write the received data to the file
-            with open(f'{parent_folder_path}/{file_name}', 'wb') as f:
+            default_storage.save(name=f'{parent_folder_path}/{file_name}', content=io.BytesIO())
+            with default_storage.open(f'{parent_folder_path}/{file_name}', 'wb') as f:
+                print(f'shutil.copyfileobj(fh, f)')
                 shutil.copyfileobj(fh, f)
+                print(f'successfully created file')
             print("File Downloaded")
             success = True
         return success

@@ -3,7 +3,12 @@ body.light-theme {
   .navbar {
     background-color: $medium-cyan;
   }
-
+  .google-drive-loading-screen {
+    background-color: white;
+    h1 {
+      color: black;
+    }
+  }
   .footer-wrapper {
     background-color: white;
     color: $dark-cyan;

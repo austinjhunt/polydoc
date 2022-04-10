@@ -26,6 +26,7 @@ urlpatterns = [
     path('document/update/<slug:pk>', views.DocumentUpdateView.as_view(), name='update-document'),
     path('document/delete/<slug:pk>', views.DocumentDeleteView.as_view(), name='delete-document'),
     path('document/<slug:pk>/pages', views.DocumentPagesView.as_view(), name='document-pages'),
+    path('document/<slug:pk>/save-notes/', views.DocumentSaveNotesView.as_view(), name='document-save-notes'),
     path('document/clear', views.DocumentClearView.as_view(), name='document-clear'),
     #path('display_document', views.display_document),
 
@@ -39,6 +40,9 @@ urlpatterns = [
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 
+## If re-creating DB, uncomment this; comment the above; leave path import uncommented
+## then run
+## python manage.py makemigrations && python manage.py migrate app
 # def fake(request):
 #     return "fake"
 # urlpatterns = [
