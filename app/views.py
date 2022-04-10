@@ -1,22 +1,16 @@
-from re import template
 from .models import DocumentContainer, Document, Page
 from .drive.utils import DriveAPI
 from django.forms import ValidationError
 from .forms import DocumentUploadForm, UserLoginForm, UserCreateForm, DocumentContainerForm
 from django.shortcuts import redirect, render
-from django.http import FileResponse, Http404, JsonResponse, HttpResponseRedirect
+from django.http import Http404, JsonResponse, HttpResponseRedirect
 from django.views.generic import View, FormView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth import logout, authenticate, login
-from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from pdf2image import convert_from_path
 from django.conf import settings
 from django.db.models import Count
-from django.forms.models import model_to_dict
-from django.core import serializers
-import os
 import json
-
+import os
 class HomeView(View):
     def get(self, request):
         return render(
@@ -167,72 +161,114 @@ class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
         return redirect('profile')
 
 
-class DocumentContainerImportView(LoginRequiredMixin, CreateView):
-
-    model = DocumentContainer
-    form_class = DocumentContainerForm
-    success_url = 'profile'
+class ImportFromDriveView(LoginRequiredMixin, View):
     login_url = 'login'
     template_name = 'forms/import-google-drive-folder.html'
 
-    def form_valid(self, form):
-        folder_name = form.cleaned_data['name']
-
-        document_container = DocumentContainer(
-            name=folder_name,
-            user=self.request.user
+    def get(self, request):
+        # Get folders (only folders) from Google Drive account
+        drive = DriveAPI(request=request)
+        if not drive.has_valid_creds():
+            print('drive connection creds expired; refreshing')
+            drive.refresh()
+            request.session['creds'] = drive.creds
+            url = drive.get_authorization_url()[0]
+            return HttpResponseRedirect(url)
+        if not drive.service_connected():
+            drive.connect_drive_service()
+        google_drive_folders = drive.get_folder_list()
+        return render(
+            request=request,
+            template_name=self.template_name,
+            context={
+                'google_drive_folders': google_drive_folders
+            }
         )
-        document_container.save()
 
-        # Get drive API instance from authentication, or return error (todo)
-        #drive = request.session['driveAPI'].lo
-        #if not drive.connected:
-        #    print(f"Error, driveAPI has not been connected")
+    def post(self, request):
+        try:
+            print(request.body.decode())
+            print(request.__dict__)
+            data = json.loads(request.body.decode())
+        except Exception as e:
+            print(e)
+            return redirect('profile')
+        selected_drive_folder_id = data['folderId']
+        selected_drive_folder_name = data['folderName']
+        if not selected_drive_folder_name or not selected_drive_folder_id:
+            return JsonResponse({'result': 'drive folder id or name not provided'})
+        drive = DriveAPI(request=request)
+        if not drive.has_valid_creds():
+            return JsonResponse({'result': 'drive not connected'})
+        if not drive.service_connected():
+            drive.connect_drive_service()
 
-        drive = DriveAPI()
-        folder_id = drive.get_folder_id(folder_name)
-        files = drive.get_folder_list(folder_id)
-
-        relative_folder_path = f'/media/documents/{self.request.user.username}'
-        full_folder_path = f'{settings.MEDIA_ROOT}/documents/{self.request.user.username}'
-
-        for f in files:
-            _fname = f.get('name') + ".pdf"
-
-            # Store pdf in database
-            if len(_fname) > 15:
-                # Shorten filename if longer than 15 chars. Otherwise it causes problems.
-                _extension = _fname.split('.')[-1]
-                # If _fname is less than 20 chars, the extension doesn't get fully removed, so there are still two "."
-                # Setting end_index to resolve this
-                end_index = min(15, len(_fname)-(len(_extension) + 1))
-                _fname = f'{_fname[:end_index]}.{_extension}'
-            clean_filename = _fname.replace(' ', '-').strip().lower()
-
-            # Download file as a pdf from drive
-            drive.get_file(f.get('id'), full_folder_path, _fname)
-
-            full_filename = f'{full_folder_path}/{_fname}'
-            new_doc = Document(
-                notes='',
-                title=clean_filename,
-                location=f'{relative_folder_path}/{clean_filename}',
-                user=self.request.user,
+        try:
+            files_in_selected_folder = drive.get_files_in_folder(folder_id=selected_drive_folder_id)
+            relative_folder_path = f'/media/documents/{self.request.user.username}'
+            full_folder_path = f'{settings.MEDIA_ROOT}/documents/{self.request.user.username}'
+            # create a document container with same name as folder
+            document_container = DocumentContainer(
+                name=selected_drive_folder_name,
+                user=request.user
             )
-            with open(full_filename, 'rb') as file:
-                new_doc.file.save(clean_filename, file)
-            new_doc.save()
-            new_doc.containers.add(document_container.id)
-            new_doc.save()
-            new_doc.create_page_images(
-                document_relative_path=f'{full_folder_path}/{clean_filename}'
-            )
+            document_container.save()
+            for f in files_in_selected_folder:
+                print(f'filename={f.get("name")}')
+                _fname = f.get('name') + ".pdf"
+                # Store pdf in database
+                if len(_fname) > 15:
+                    # Shorten filename if longer than 15 chars. Otherwise it causes problems.
+                    _extension = _fname.split('.')[-1]
+                    # If _fname is less than 20 chars, the extension doesn't get fully removed, so there are still two "."
+                    # Setting end_index to resolve this
+                    end_index = min(15, len(_fname)-(len(_extension) + 1))
+                    _fname = f'{_fname[:end_index]}.{_extension}'
+                clean_filename = _fname.replace(' ', '-').strip().lower()
 
-        # Create document container associated with this user
-        # DocumentContainer(
-        #	name=form.cleaned_data['name'],
-        #	user=self.request.user
-        # ).save()
+                # Download file as a pdf from drive
+                download_success = drive.download_file_as_pdf(
+                    file_id=f.get('id'),
+                    parent_folder_path=full_folder_path,
+                    file_name=_fname)
+                full_filename = f'{full_folder_path}/{_fname}'
+                if download_success:
+                    new_doc = Document(
+                        notes='',
+                        title=clean_filename,
+                        location=f'{relative_folder_path}/{clean_filename}',
+                        user=self.request.user,
+                    )
+                    # associate saved file with saved object
+                    with open(full_filename, 'rb') as file:
+                        # The default behaviour of Django's Storage class
+                        # is to append a series of random characters to
+                        # the end of the filename when the filename already exists which means
+                        # we'll need to rename the actual file to match the saved .file property after
+                        # calling .file.save()
+                        new_doc.file.save(clean_filename, file)
+
+                    os.rename(full_filename, new_doc.file.path)
+                    # Update the clean_filename value to reflect the rename
+                    clean_filename = new_doc.get_filename()
+
+                    new_doc.save()
+                    new_doc.containers.add(document_container.id)
+                    new_doc.save()
+                    new_doc.create_page_images(
+                        document_relative_path=f'{full_folder_path}/{clean_filename}'
+                    )
+            result = 'success'
+        except Exception as e:
+            print(e)
+            result = f'failed: {e}'
+        return JsonResponse({'result': result})
+
+
+
+class DocumentContainerClearView(LoginRequiredMixin, View):
+    def get(self, request):
+        DocumentContainer.objects.filter(user=request.user).delete()
         return redirect('profile')
 
 
@@ -335,6 +371,10 @@ class DocumentSaveNotesView(LoginRequiredMixin, View):
     def get(self, request):
         return redirect('home')
 
+class DocumentClearView(LoginRequiredMixin, View):
+    def get(self, request):
+        Document.objects.filter(user=request.user).delete()
+        return redirect('profile')
 
 class DocumentCreateView(LoginRequiredMixin, View):
     login_url = 'login'

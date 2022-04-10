@@ -16,15 +16,17 @@ urlpatterns = [
 
     # Document containers
     path('documentcontainer/create', views.DocumentContainerCreateView.as_view(), name='create-document-container'),
-    path('documentcontainer/import', views.DocumentContainerImportView.as_view(), name='import-google-drive-folder'),
+    path('documentcontainer/import-from-drive/', views.ImportFromDriveView.as_view(), name='import-from-drive'),
     path('documentcontainer/update/<slug:pk>', views.DocumentContainerUpdateView.as_view(), name='update-document-container'),
     path('documentcontainer/delete/<slug:pk>', views.DocumentContainerDeleteView.as_view(), name='delete-document-container'),
+    path('documentcontainer/clear', views.DocumentContainerClearView.as_view(), name='document-container-clear'),
 
     # Documents
     path('document/create', views.DocumentCreateView.as_view(), name='create-document'),
     path('document/update/<slug:pk>', views.DocumentUpdateView.as_view(), name='update-document'),
     path('document/delete/<slug:pk>', views.DocumentDeleteView.as_view(), name='delete-document'),
     path('document/<slug:pk>/pages', views.DocumentPagesView.as_view(), name='document-pages'),
+    path('document/clear', views.DocumentClearView.as_view(), name='document-clear'),
     #path('display_document', views.display_document),
 
     # Multiview functionality

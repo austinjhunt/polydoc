@@ -34,6 +34,53 @@ multiviewDocs.forEach((el, index) => {
   );
 });
 
+let filterFolderOptions = (event) => {
+  let query = event.target.value.toLowerCase();
+  console.log(`query=${query}`);
+  let folderOptions = document.querySelectorAll(".folder-options button");
+  folderOptions.forEach((el, i) => {
+    if (el.textContent.toLowerCase().includes(query)) {
+      el.classList.remove("d-none");
+    } else {
+      el.classList.add("d-none");
+    }
+  });
+};
+
+let googleDriveImportLoadingScreen = {
+  show: () => {
+    document
+      .querySelector(".google-drive-loading-screen")
+      .classList.remove("d-none");
+  },
+  hide: () => {
+    document
+      .querySelector(".google-drive-loading-screen")
+      .classList.add("d-none");
+  },
+};
+
+let importDriveFolderAsContainer = (folderId, folderName) => {
+  // display loading screen for Google Drive import here
+  googleDriveImportLoadingScreen.show();
+  fetch("/documentcontainer/import-from-drive/", {
+    method: "POST",
+    body: JSON.stringify({
+      folderId: folderId,
+      folderName: folderName,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": CSRF_TOKEN,
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      googleDriveImportLoadingScreen.hide();
+      console.log(data);
+    });
+};
+
 let hideLoaderAfterMillisecondDelay = (delay) => {
   setTimeout(() => {
     try {
@@ -85,6 +132,7 @@ let saveDocumentNotes = async (props) => {
     method: "POST",
     body: JSON.stringify(data),
     headers: {
+      "Content-Type": "application/json",
       "X-CSRFToken": CSRF_TOKEN,
     },
   })
@@ -131,6 +179,7 @@ document.onreadystatechange = function () {
           current_theme: document.body.className,
         }),
         headers: {
+          "Content-Type": "application/json",
           "X-CSRFToken": CSRF_TOKEN,
         },
       }).then((response) => {

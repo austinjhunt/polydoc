@@ -8,6 +8,7 @@ def theme_context(request):
         show_loader = True
         request.session['active'] = True
 
+
     if 'theme' in request.session:
         theme = request.session['theme']
     else:

@@ -1,18 +1,14 @@
 {% extends 'master.html' %}
 {% block content %}
 <div class="container p-5">
-    <figure class="md:flex bg-slate-100 rounded-xl p-8 md:p-0 dark:bg-slate-800">
-         <div class="pt-6 md:p-8 text-center md:text-left space-y-4 text-white">
+    <figure class="d-flex bg-dark p-4">
+         <div class="text-center p-4 text-light">
             <h1 class="text-3xl">Welcome to PolyDoc.</h1>
             <p class="text-lg font-medium">
                 Are you looking for an online solution for viewing and managing many documents simultaneously, all in a single view? Do you use Google Drive for storing your documents?
             </p>
             <p class="text-xl ">You've found the right solution.</p>
-            {% if user.is_authenticated %}
-            <a href="{% url 'profile' %}" class="bg-slate-900 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 text-white font-semibold h-12 px-6 rounded-lg w-full flex items-center justify-center sm:w-auto dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400"  >Get Started</a>
-            {% else %}
-            <a href="{% url 'login' %}"  class="bg-slate-900 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 text-white font-semibold h-12 px-6 rounded-lg w-full flex items-center justify-center sm:w-auto dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400"  >Get Started</a>
-            {% endif %}
+            <a  href="{% if user.is_authenticated %} {% url 'profile' %}  {% else %} {% url 'login' %} {% endif %}"  class="btn btn-primary p-3"  >Get Started</a>
         </div>
       </figure>
 </div>

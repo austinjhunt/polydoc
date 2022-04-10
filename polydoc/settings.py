@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-sd$tg!cxostzu^rn=nvha7-n5(k845tuvgsi@g4ao!+q9po311'
 
 DEBUG = not ('PRODUCTION' in os.environ)
-ADMINS = [('huntaj@cofc.edu', 'Austin Hunt')]
+ADMINS = [('Austin Hunt', 'austin353@gmail.com'), ('Joshua Dunn', 'JoshuaDunnCS@gmail.com')]
 
 ALLOWED_HOSTS = [
     "poly-doc.herokuapp.com",
@@ -78,12 +78,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles','django_browser_reload',
     'app',
-    'tailwindapp',
-    'tailwind',
     'compressor'
 ]
-# Tailwind CSS (pip install django-tailwind)
-TAILWIND_APP_NAME = 'tailwindapp'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -194,7 +190,7 @@ STATICFILES_FINDERS = (
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-GOOGLE_DRIVE_FOLDER = f'{BASE_DIR}/google-drive'
+GOOGLE_DRIVE_FOLDER = f'{BASE_DIR}/drive'
 GOOGLE_DRIVE_CREDENTIALS_JSON_FILE = f'{BASE_DIR}/drive/credentials.json'
 GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI = 'http://localhost:8000/drive/authenticate' if DEBUG else 'https://poly-doc.herokuapp.com/drive/authenticate'
 GOOGLE_DRIVE_AUTHORIZATION_RESPONSE_URI = 'http://localhost:8000/profile' if DEBUG else 'https://poly-doc.herokuapp.com/profile'
