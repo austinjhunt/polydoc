@@ -1,6 +1,5 @@
-from ..utils import FileUtility
+from ..utils import FileUtility, DriveAPI
 from ..models import DocumentContainer, Document, Page
-from ..drive.utils import DriveAPI
 from ..forms import DocumentContainerForm
 from django.shortcuts import redirect, render
 from django.http import Http404, JsonResponse, HttpResponseRedirect

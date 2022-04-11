@@ -56,7 +56,6 @@ class Document(models.Model):
         print(f'filepath = {path}')
         return path
 
-
     def get_filename(self):
         """ Get the base name of the associated file """
         filepath = self.get_filepath()

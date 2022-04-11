@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.files.storage import default_storage
+
 class FileUtility:
     def __init__(self):
         self.s3_storage_active = (not settings.DEBUG)
@@ -42,6 +43,8 @@ class FileUtility:
         """ recursively remove a folder given its path """
         print(f'Recursively removing folder {folder_path}')
         dirs, files = default_storage.listdir(folder_path)
+        if not folder_path.endswith('/'):
+            folder_path = f'{folder_path}/'
         for file in files:
             filepath = f'{folder_path}{file}'
             print(f'deleting {filepath}')
@@ -58,13 +61,3 @@ class FileUtility:
             default_storage.delete(path)
         except Exception as e:
             print(e)
-
-
-def clean_and_shorten_filename(filename):
-    # Shorten filename if longer than 15 chars. Otherwise it causes problems.
-    _extension = filename.split('.')[-1]
-    end_index = min(15, len(filename)-(len(_extension) + 1))
-    filename = f'{filename[:end_index]}.{_extension}'
-    return filename.replace(' ','-').strip().lower()
-
-

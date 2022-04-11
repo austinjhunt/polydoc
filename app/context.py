@@ -1,5 +1,5 @@
 
-from app.drive.utils import DriveAPI
+from .utils import DriveAPI
 
 def theme_context(request):
     # determine if first request or not

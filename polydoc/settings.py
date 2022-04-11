@@ -33,6 +33,7 @@ ADMINS = [('Austin Hunt', 'austin353@gmail.com'), ('Joshua Dunn', 'JoshuaDunnCS@
 
 ALLOWED_HOSTS = [
     "poly-doc.herokuapp.com",
+    "polydoc.xyz",
     "localhost"
 ]
 INTERNAL_IPS = [

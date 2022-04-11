@@ -1,9 +1,8 @@
-from ..drive.utils import DriveAPI
+from ..utils import DriveAPI
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-
 
 class DriveView(LoginRequiredMixin, View):
     def get(self, request):
