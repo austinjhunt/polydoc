@@ -20,8 +20,8 @@
 }
 
 .boxes {
-  height: 32px;
-  width: 32px;
+  height: 100px;
+  width: 30px;
   position: relative;
   -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
@@ -33,8 +33,8 @@
 }
 
 .boxes .box {
-  width: 32px;
-  height: 32px;
+  height: 100px;
+  width: 30px;
   top: 0px;
   left: 0;
   position: absolute;
