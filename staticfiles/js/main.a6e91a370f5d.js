@@ -286,7 +286,7 @@ let updateActiveTableRow = (currentPageIndex) => {
       trDocPage.classList.add("table-active");
       let notes = trDocPage.querySelector("textarea");
       notes.focus();
-      //notes.scrollIntoView(); bad UX
+      notes.scrollIntoView();
     } else {
       trDocPage.classList.remove("table-active");
     }

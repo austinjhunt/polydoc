@@ -20,6 +20,8 @@ urlpatterns = [
     path('documentcontainer/update/<slug:pk>', views.DocumentContainerUpdateView.as_view(), name='update-document-container'),
     path('documentcontainer/delete/<slug:pk>', views.DocumentContainerDeleteView.as_view(), name='delete-document-container'),
     path('documentcontainer/clear', views.DocumentContainerClearView.as_view(), name='document-container-clear'),
+    path('documentcontainer/export-summary/<slug:pk>', views.DocumentContainerExportSummary.as_view(), name='export-document-container-summary'),
+    path('documentcontainer/export-detail/<slug:pk>', views.DocumentContainerExportDetail.as_view(), name='export-document-container-detail'),
 
     # Documents
     path('document/create', views.DocumentCreateView.as_view(), name='create-document'),
@@ -27,7 +29,9 @@ urlpatterns = [
     path('document/delete/<slug:pk>', views.DocumentDeleteView.as_view(), name='delete-document'),
     path('document/<slug:pk>/pages', views.DocumentPagesView.as_view(), name='document-pages'),
     path('document/<slug:pk>/save-notes/', views.DocumentSaveNotesView.as_view(), name='document-save-notes'),
+    path('document/<slug:pk>/grade/', views.DocumentGradeView.as_view(), name='document-grade'),
     path('document/clear', views.DocumentClearView.as_view(), name='document-clear'),
+    path('document/export/<slug:pk>', views.DocumentExportView.as_view(), name='document-export'),
     #path('display_document', views.display_document),
 
     # Multiview functionality

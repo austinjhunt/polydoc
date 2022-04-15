@@ -1,12 +1,16 @@
-from ..utils import DriveAPI,  remove_task_from_session_active_tasks, add_task_to_session_active_tasks
+from wsgiref.util import FileWrapper
+from ..utils import DriveAPI,  add_task_to_session_active_tasks
 from ..tasks import import_drive_folder
 from ..models import DocumentContainer, Document, Page
 from ..forms import DocumentContainerForm
 from django.shortcuts import redirect, render
-from django.http import Http404, JsonResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.views.generic import View,  CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 import json
+import csv
+import io
+import zipfile
 
 class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
     model = DocumentContainer
@@ -23,6 +27,61 @@ class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
         ).save()
         return redirect('profile')
 
+class DocumentContainerExportSummary(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        dc = DocumentContainer.objects.get(id=pk)
+        if dc.user == request.user:
+            response = HttpResponse(
+                content_type='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename={dc.name.replace(" ","-").lower()}.csv'}
+            )
+            writer = csv.writer(response)
+            writer.writerow(['Document', 'Grade'])
+            for doc in Document.objects.filter(containers__in=[dc.id]):
+                print(doc)
+                writer.writerow([doc.title, doc.grade])
+            return response
+        else:
+            return redirect('profile')
+
+class DocumentContainerExportDetail(LoginRequiredMixin, View):
+    def build_doc_csv(self, doc):
+        header_data = {
+            'page': 'Page',
+            'notes': 'Notes',
+            'grade': f'Grade={doc.grade}'
+        }
+        mem_file = io.StringIO()
+        writer = csv.DictWriter(
+            mem_file, fieldnames=header_data.keys()
+        )
+        writer.writerow(header_data)
+        for page in Page.objects.filter(document__in=[doc.id]).order_by('index'):
+            writer.writerow({'page': page.index, 'notes': page.notes, 'grade': ''})
+        mem_file.seek(0)
+        return {'content': mem_file, 'title': doc.title}
+
+    def get(self, request, pk):
+        dc = DocumentContainer.objects.get(id=pk)
+        if dc.user == request.user:
+            docs = Document.objects.filter(containers__in=[dc.id])
+            doc_csv_files = [self.build_doc_csv(doc=d) for d in docs]
+            temp_file = io.BytesIO()
+            with zipfile.ZipFile(
+                temp_file, 'w', zipfile.ZIP_DEFLATED
+            ) as temp_file_opened:
+                for doc_csv_obj in doc_csv_files:
+                    temp_file_opened.writestr(
+                        f'{doc_csv_obj["title"]}.csv',
+                        doc_csv_obj["content"].getvalue()
+                    )
+            response = HttpResponse(temp_file.getvalue())
+            response['Content-Type'] = 'application/x-zip-compressed'
+            response['Content-Disposition'] = f'attachment; filename={dc.name.replace(" ","-").lower()}.zip'
+            return response
+        else:
+            return redirect('profile')
 
 class ImportFromDriveView(LoginRequiredMixin, View):
     login_url = 'login'
@@ -34,7 +93,7 @@ class ImportFromDriveView(LoginRequiredMixin, View):
             drive.refresh()
             request.session['creds'] = drive.creds
             url = drive.get_authorization_url()[0]
-            return HttpResponseRedirect(url)
+            return redirect(url)
         if not drive.service_connected():
             drive.connect_drive_service()
         google_drive_folders = drive.get_folder_list()

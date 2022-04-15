@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 let notifyUserTaskComplete = (data) => {
   // data: {'state': 'SUCCESS', 'complete': True, 'success': True, 'progress': {'pending': False, 'current': 100, 'total': 100, 'percent': 100}, 'result': 'success'}
-  document.querySelector(".notification-description").textContent = data.result;
+  document.querySelector(".notification-description").textContent = 1; //data.result;
   document.querySelector(".notification-badge").classList.remove("d-none");
 };
 
@@ -286,7 +286,7 @@ let updateActiveTableRow = (currentPageIndex) => {
       trDocPage.classList.add("table-active");
       let notes = trDocPage.querySelector("textarea");
       notes.focus();
-      notes.scrollIntoView();
+      //notes.scrollIntoView(); bad UX
     } else {
       trDocPage.classList.remove("table-active");
     }

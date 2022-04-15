@@ -198,7 +198,7 @@ STATICFILES_FINDERS = (
 
 
 #### BEGIN CELERY SETTINGS ####
-BROKER_URL = 'redis://localhost:6379' if DEBUG else 'redis://:p6c4e2b3cf03d310a4f8fff49ee7caf10e15bb5699cd0d770b14b0b0233f01223@ec2-54-227-24-175.compute-1.amazonaws.com:14960'
+BROKER_URL = os.environ.get('REDIS_URL', None)
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -226,7 +226,5 @@ if 'APPLICATION_ON_HEROKU' in os.environ:
     # Configure Django App for Heroku.
     import django_heroku
     django_heroku.settings(locals())
-    print('using heroku database')
-else:
-    print('using local sqlite3 database')
+    print('using heroku settings')
 

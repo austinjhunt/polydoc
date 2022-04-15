@@ -1,11 +1,11 @@
 from ..utils import FileUtility
 from ..models import Document, Page, DocumentContainer
 from django.shortcuts import redirect, render
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.views.generic import View, CreateView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 import json
-from django.conf import settings
+import csv
 
 class DocumentUpdateView(LoginRequiredMixin, CreateView):
     def get(self, request):
@@ -163,6 +163,41 @@ class DocumentCreateView(LoginRequiredMixin, View):
             )
         return redirect('profile')
 
+class DocumentExportView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        doc = Document.objects.get(id=pk)
+        if doc.user == request.user:
+            response = HttpResponse(
+                content_type='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename={doc.title.replace(" ","-").lower()}.csv'}
+            )
+            writer = csv.writer(response)
+            writer.writerow(['Page', 'Notes', f'Grade={doc.grade}'])
+            for page in Page.objects.filter(document__in=[doc.id]).order_by('index'):
+                writer.writerow([page.index, page.notes])
+            return response
+        else:
+            return redirect('profile')
 
-
-
+class DocumentGradeView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        doc = Document.objects.get(id=pk)
+        if doc.user == request.user:
+            data = json.loads(request.body.decode())
+            grade = data['grade']
+            try:
+                grade = int(grade)
+                if grade > 100:
+                    grade = 100
+                if grade < 0:
+                    grade = 0
+                doc.grade = grade
+                doc.save()
+                result = f'{doc.title} grade updated to {grade}'
+            except Exception as e:
+                print(e)
+                result = e
+            return JsonResponse({'result': result})
+        else:
+            return JsonResponse({'result': 'unauthorized'})

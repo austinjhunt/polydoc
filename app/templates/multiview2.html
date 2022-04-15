@@ -31,8 +31,18 @@
                     class="doc-table table {% if forloop.counter != 1 %} d-none {% endif %}">
                     <thead>
                         <tr>
-                            <th class="text-center">{{doc.title}}</th>
+                            <th class="text-center">
+                                <div class="d-inline-block">
+                                    {{doc.title}}
+                                </div>
+                            </th>
                             <th class="text-end">
+                                <div class="d-block mb-3">
+                                    <label for="doc-{{doc.id}}-grade">Optional Document Grade:</label>
+                                    <input onchange="saveGrade(this)" id="doc-{{doc.id}}-grade" data-docid="{{doc.id}}" value="{{doc.grade}}" class="d-inline-block form-control w-25 ms-3" type="number" max="100">
+                                    <span class="d-inline-block">&nbsp;/100</span>
+                                </div>
+
                                 <button onclick="saveDocumentNotes({docID: `{{doc.id}}`, showToast: true});"
                                     data-bs-placement="top" data-bs-toggle="tooltip"
                                     title="Click to save notes for this document only (the below table)" role="button"
@@ -95,6 +105,34 @@
         </div>
     </div>
 </div>
+<script>
+    let saveGrade = (gradeInputElem) => {
+        let grade = gradeInputElem.value;
+        let docId = gradeInputElem.dataset.docid;
+        console.log('saving grade');
+        fetch(`/document/${docId}/grade/`, {
+            method: "POST",
+            body: JSON.stringify({
+                grade: grade
+            }),
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": CSRF_TOKEN,
+            },
+        }).then(response=>response.json())
+        .then(data=>{
+            console.log(data);
+            // show toast
+            let toast = document.querySelector(".toast");
+            toast.querySelector(".toast-bold").textContent = 'Success';
+            toast.querySelector(".toast-when").textContent = "Just Now";
+            toast.querySelector(
+            ".toast-body"
+            ).textContent = `Grade updated to ${grade} for doc ${docId}`;
+            TOAST.show();
+        })
+    }
+</script>
 <style>
     .multiview-document {
         position: relative;

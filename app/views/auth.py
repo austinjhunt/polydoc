@@ -91,7 +91,7 @@ class ProfileView(LoginRequiredMixin, FormView):
             )
         return render(
             request=request,
-            template_name='profile.html',
+            template_name='dashboard.html',
             context={
                 'form': self.form_class(),
                 'user_document_containers': user_document_containers,
@@ -105,6 +105,6 @@ class ProfileView(LoginRequiredMixin, FormView):
         print(files)
         return render(
             request=self.request,
-            template_name='profile.html',
+            template_name='dashboard.html',
             context={'form': form}
         )

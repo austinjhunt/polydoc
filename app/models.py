@@ -35,6 +35,7 @@ class DocumentContainer(models.Model):
     name = models.CharField(max_length=256, default='Document Container')
 
 class Document(models.Model):
+    grade = models.IntegerField(default=0, null=True, blank=True)
     notes = models.TextField(default='')
     title = models.CharField(max_length=256, default='Document')
     location = models.CharField(max_length=512, default='')

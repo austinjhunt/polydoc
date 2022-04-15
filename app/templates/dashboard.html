@@ -41,19 +41,33 @@
                 </div>
                 <hr />
                 {% for dc in user_document_containers %}
-                <div class="col doc badge pill m-1 bg-secondary shadow">
-                    <span>{{dc.name}} ({{dc.doc_count}} docs)</span>
-                    <span><a class="btn btn-dark btn-sm" href="{% url 'multiview' dc.id %}" data-bs-toggle="tooltip"
+                <div class="col doc badge pill m-1 bg-secondary shadow w-100 d-flex">
+                    <span class="text-start me-auto d-flex align-items-center">{{dc.name}} ({{dc.doc_count}} docs) </span>
+
+                     <div class="text-end ms-auto">
+                         <span><a class="btn btn-dark btn-sm" href="{% url 'multiview' dc.id %}" data-bs-toggle="tooltip"
                             title="Simultaneously manage all documents in this container"><i class="fa fa-eye"></i><i
                                 class="fa fa-eye"></i> Multiview</a></span>
-                    <span><a href="{% url 'update-document-container' dc.id %}" class="btn btn-success btn-sm"
-                            title="update document container">
-                            Edit <i class="fa fa-edit"></i>
-                        </a></span>
-                    <span><a href="{% url 'delete-document-container' dc.id %}" class="btn btn-danger btn-sm"
-                            title="delete document container">
-                            Delete <i class="fa fa-trash"></i>
-                        </a></span>
+                        <span><a href="{% url 'update-document-container' dc.id %}" class="btn btn-success btn-sm"
+                                title="update document container">
+                                Edit <i class="fa fa-edit"></i>
+                            </a></span>
+                        <span>
+                            <div class="dropdown d-inline-block">
+                                <a class="btn btn-sm btn-info dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                                Export CSV
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                <li><a class="dropdown-item" href="{% url 'export-document-container-summary' dc.id %}" >Summary</a></li>
+                                <li><a class="dropdown-item" href="{% url 'export-document-container-detail' dc.id %}">Detail (ZIP)</a></li>
+                                </ul>
+                            </div>
+                        </span>
+                        <span><a href="{% url 'delete-document-container' dc.id %}" class="btn btn-danger btn-sm"
+                                title="delete document container">
+                                Delete <i class="fa fa-trash"></i>
+                            </a></span>
+                        </div>
                 </div>
                 {% endfor %}
             </div>
@@ -76,22 +90,29 @@
                 <hr />
                 <div class="row my-1">
                     {% for doc in user_documents %}
-                    <div class="col doc badge pill m-1 bg-secondary shadow">
-                        <span class="mx-1">{{doc.title}} - {% if doc.num_pages == 1 %}
+                    <div class="col doc badge pill m-1 bg-secondary shadow d-flex">
+                        <span class="text-start me-auto d-flex align-items-center">{{doc.title}} - {% if doc.num_pages == 1 %}
                             1 page
                             {% else %}
                             {{ doc.num_pages }} pages
                             {% endif %}</span>
-                        <span><a href="{{doc.location}}" class="btn btn-primary btn-sm"><i class="fa fa-eye"></i>
+                        <div class="ms-auto text-end">
+                            <span><a href="{{doc.location}}" class="btn btn-primary btn-sm"><i class="fa fa-eye"></i>
                                 View</a></span>
                         <span><a href="{% url 'update-document' doc.id %}" class="btn btn-success btn-sm"
                                 title="update document">
                                 Edit <i class="fa fa-edit"></i>
                             </a></span>
+                        <span><a href="{% url 'document-export' doc.id %}" class="btn btn-info btn-sm"
+                                title="download CSV for this document">
+                                Export Doc CSV <i class="fa fa-download"></i>
+                            </a></span>
                         <span><a href="{% url 'delete-document' doc.id %}" class="btn btn-danger btn-sm"
                                 title="delete document">
                                 Delete <i class="fa fa-trash"></i>
                             </a></span>
+                        </div>
+
                     </div>
                     {% endfor %}
                 </div>
