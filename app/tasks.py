@@ -27,18 +27,22 @@ def import_drive_folder(self, userid, username, folder_id, folder_name):
     if not drive.service_connected():
         drive.connect_drive_service()
     try:
+        logger.info(f'getting files in selected folder {folder_id}')
         files_in_selected_folder = drive.get_files_in_folder(folder_id=folder_id)
         num_files = len(files_in_selected_folder)
+        logger.info(f'{num_files} total files in selected folder')
         # used as site-relative href value on front-end
         relative_folder_path = f'/media/documents/{username}'
         futil = FileUtility()
         full_folder_path = futil.generate_path_to_user_document_folder(username=username)
         # create a document container with same name as folder
+        logger.info(f'creating document container')
         document_container = DocumentContainer(
             name=folder_name,
             user_id=userid
         )
         document_container.save()
+        logger.info(f'created document container')
         for i, f in enumerate(files_in_selected_folder):
             logger.info(f'updating progress on progress_recorder with current={i+1}, total={num_files}')
             progress_recorder.set_progress(current=i+1, total=num_files, description=f'Importing {i+1} of {num_files} files')
@@ -83,9 +87,6 @@ def import_drive_folder(self, userid, username, folder_id, folder_name):
         result = 'Success'
     except Exception as e:
         logger.error(e)
-        logger.error("-"*60)
-        traceback.print_exc(file=sys.stdout)
-        logger.error("-"*60)
         result = f'failed: {e}'
     return result
 

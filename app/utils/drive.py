@@ -11,9 +11,13 @@ from django.conf import settings
 import os
 import json
 import requests
+import logging
+# don't make this a method of the DriveAPI class because
+# self needs to refer to the task, not the DriveAPI instance
 class DriveAPI:
 
-    def __init__(self, request=None, user_id=None):
+    def __init__(self, request=None, user_id=None, verbose=False):
+        self.setup_logging(verbose=verbose)
         self.connected = False
         self.service = None
         self.secrets_from_json = None
@@ -43,6 +47,30 @@ class DriveAPI:
 
         if os.path.exists(self.access_token_file):
             self.load_creds_from_file()
+
+    def setup_logging(self, verbose):
+        """ set up self.logger for producer logging """
+        self.logger = logging.getLogger('DriveAPI')
+        formatter = logging.Formatter('%(prefix)s - %(message)s')
+        handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
+        self.prefix = {'prefix': 'DriveAPI'}
+        self.logger.addHandler(handler)
+        self.logger = logging.LoggerAdapter(self.logger, self.prefix )
+        if verbose:
+            self.logger.setLevel(logging.DEBUG)
+            self.logger.debug('Debug mode enabled', extra=self.prefix )
+        else:
+            self.logger.setLevel(logging.INFO)
+
+    def debug(self, msg):
+        self.logger.debug(msg, extra=self.prefix)
+
+    def info(self, msg):
+        self.logger.info(msg, extra=self.prefix)
+
+    def error(self, msg):
+        self.logger.error(msg, extra=self.prefix)
 
     def _init_secrets_from_json(self):
         with open(settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE, 'r') as f:
@@ -191,13 +219,16 @@ class DriveAPI:
     def get_files_in_folder(self, folder_id):
         """ Given a folder ID, pull a list of files in that folder  """
         files_in_folder = []
+        self.info(f'Getting files in folder {folder_id}')
         page_token = None
         while True:
             response = self.service.files().list(q=f"'{folder_id}' in parents",
                                                  pageSize=100,
                                                  fields='nextPageToken, files(id, name)',
                                                  pageToken=page_token).execute()
+            self.info(f'Response from get files: {response}')
             for f in response.get('files', []):
+                self.info(f'Appending file {f}')
                 files_in_folder.append(f)
             page_token = response.get('nextPageToken', None)
             if page_token is None:
