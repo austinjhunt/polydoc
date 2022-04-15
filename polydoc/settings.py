@@ -36,6 +36,11 @@ ALLOWED_HOSTS = [
     "polydoc.xyz",
     "localhost"
 ]
+CSRF_TRUSTED_ORIGINS = [
+    'https://polydoc.xyz',
+    'https://poly-doc.herokuapp.com',
+]
+
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
@@ -219,8 +224,8 @@ if not DEBUG: # production
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 GOOGLE_DRIVE_FOLDER = f'{BASE_DIR}/drive'
 GOOGLE_DRIVE_CREDENTIALS_JSON_FILE = f'{BASE_DIR}/drive/credentials.json'
-GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI = 'http://localhost:8000/drive/authenticate' if DEBUG else 'https://poly-doc.herokuapp.com/drive/authenticate'
-GOOGLE_DRIVE_AUTHORIZATION_RESPONSE_URI = 'http://localhost:8000/profile' if DEBUG else 'https://poly-doc.herokuapp.com/profile'
+GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI = 'http://localhost:8000/drive/authenticate' if DEBUG else 'https://polydoc.xyz/drive/authenticate'
+GOOGLE_DRIVE_AUTHORIZATION_RESPONSE_URI = 'http://localhost:8000/profile' if DEBUG else 'https://polydoc.xyz/profile'
 # Only use heroku configuration if application currently running on heroku
 if 'APPLICATION_ON_HEROKU' in os.environ:
     # Configure Django App for Heroku.
