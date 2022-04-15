@@ -23,8 +23,7 @@ def import_drive_folder(self, userid, username, folder_id, folder_name):
         logger.error('drive folder id or name not provided')
         return 'drive folder id or name not provided'
     if not drive.has_valid_creds():
-        logger.error('drive not connected')
-        return 'drive not connected'
+        drive.refresh()
     if not drive.service_connected():
         drive.connect_drive_service()
     try:
