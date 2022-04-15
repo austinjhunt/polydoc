@@ -44,6 +44,9 @@
           <li class="nav-item">
             <a class="nav-link disabled" href="#">{{user.username}}</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'task-status-view' %} ">Task Monitor</a>
+          </li>
           {% if drive_authenticated %}
           <li class="nav-item">
             <a class="nav-link disabled" href="#">Connected to Drive <i class="fa fa-link"></i></a>
@@ -54,7 +57,12 @@
           </li>
           {% endif %}
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'profile' %}">My Profile</a>
+            <a class="nav-link" href="{% url 'profile' %}">My Profile
+              <span class="position-absolute top-10 end-10 translate-middle badge rounded-pill bg-danger notification-badge d-none">
+                <span class="notification-description"></span>
+                <span class="visually-hidden">notifications</span>
+              </span>
+            </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'logout' %}">Sign Out</a>
@@ -85,6 +93,15 @@
       </div>
     </div>
   </div>
+
+  {% if active_tasks %}
+  <ul class="d-none" class="active-task-list">
+    {% for t in active_tasks %}
+      <li class="active-task-id" data-task-id="{{t}}"></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
   {% if show_loader %}
   {% include 'include/loader.html' %}
   {% endif %}
@@ -100,7 +117,6 @@
           <use xlink:href="#bootstrap"></use>
         </svg>
       </a>
-
       <ul class="nav col-md-4 justify-content-end">
         <li class="nav-item">
           <a href="https://www.linkedin.com/in/joshua-dunn-144b12178/" class="nav-link px-2">Josh Dunn
@@ -118,10 +134,12 @@
       </ul>
     </footer>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
     crossorigin="anonymous"></script>
   {% compress js %}
+  <script src="{% static 'js/celeryprogress.js' %}"></script>
   <script src="{% static 'js/main.js' %}"></script>
   {% endcompress %}
   <script>

@@ -1,9 +1,8 @@
-from email.policy import default
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.dispatch import receiver
-import os
 from pdf2image import convert_from_path, convert_from_bytes
 from django.core.files.storage import default_storage
 from .utils import FileUtility
@@ -11,14 +10,13 @@ from .utils import FileUtility
 # Create your models here.
 def user_directory_path(instance, filename):
     print(f'saving doc file to media/documents/{instance.user}/{filename}')
-    return f'media/documents/{instance.user}/{filename}'
+    return f'documents/{instance.user}/{filename}' if settings.DEBUG else f'media/documents/{instance.user}/{filename}'
 
-def get_path_to_page_images_folder(document_object=None, use_site_relative_path=False):
-    """ Get the path to the folder containing all of the page images for a document.
-    Must use relative path if use_site_relative_path=True """
+def get_path_to_page_images_folder(document_object=None):
+    """ Get the path to the folder containing all of the page images for a document. """
     futil = FileUtility()
     print('getting path to page images folder')
-    document_location = futil.get_document_object_file_location(document_object=document_object, use_site_relative_path=use_site_relative_path)
+    document_location = futil.get_document_object_file_location(document_object=document_object)
     print(f'document_location = {document_location}')
     return f'{document_location.split(".")[0]}'
 
@@ -30,7 +28,7 @@ def page_image_folder_path(instance, filename):
     """
     print(f'inside page_image_folder_path(instance, filename)')
     print(f'filename={filename}')
-    return f'{get_path_to_page_images_folder(document_object=instance.document, use_site_relative_path=True)}/{filename}'
+    return f'{get_path_to_page_images_folder(document_object=instance.document)}/{filename}'
 
 class DocumentContainer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

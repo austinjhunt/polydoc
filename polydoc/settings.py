@@ -56,7 +56,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'mysite.log',
+            'filename': 'polydoc.log',
             'formatter': 'verbose'
         },
     },
@@ -66,7 +66,7 @@ LOGGING = {
             'propagate': True,
             'level':'DEBUG',
         },
-        'MYAPP': {
+        'POLYDOC': {
             'handlers': ['file'],
             'level': 'DEBUG',
         },
@@ -86,6 +86,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles','django_browser_reload',
     'app',
     'compressor',
+    'celery_progress',
+    'celery',
+    'django_celery_results',
     'storages'
 ]
 
@@ -192,6 +195,17 @@ STATICFILES_FINDERS = (
     # other finders..
     'compressor.finders.CompressorFinder',
 )
+
+
+#### BEGIN CELERY SETTINGS ####
+BROKER_URL = 'redis://localhost:6379' if DEBUG else 'redis://:p6c4e2b3cf03d310a4f8fff49ee7caf10e15bb5699cd0d770b14b0b0233f01223@ec2-54-227-24-175.compute-1.amazonaws.com:14960'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'US/Eastern'
+#### END CELERY SETTINGS ####
+
 
 if not DEBUG: # production
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', None)

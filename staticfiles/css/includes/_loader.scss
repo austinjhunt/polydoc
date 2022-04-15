@@ -19,8 +19,8 @@ $dark: #14a1f2;
 }
 
 .boxes {
-  height: 100px;
-  width: 30px;
+  height: 32px;
+  width: 32px;
   position: relative;
   -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
@@ -31,8 +31,8 @@ $dark: #14a1f2;
   transform: rotateX(60deg) rotateZ(45deg) rotateY(0deg) translateZ(0px);
 }
 .boxes .box {
-  height: 100px;
-  width: 30px;
+  width: 32px;
+  height: 32px;
   top: 0px;
   left: 0;
   position: absolute;

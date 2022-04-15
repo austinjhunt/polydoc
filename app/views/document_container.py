@@ -1,15 +1,12 @@
-from ..utils import FileUtility, DriveAPI
+from ..utils import DriveAPI,  remove_task_from_session_active_tasks, add_task_to_session_active_tasks
+from ..tasks import import_drive_folder
 from ..models import DocumentContainer, Document, Page
 from ..forms import DocumentContainerForm
 from django.shortcuts import redirect, render
 from django.http import Http404, JsonResponse, HttpResponseRedirect
 from django.views.generic import View,  CreateView, UpdateView, DeleteView
-from storages.backends.s3boto3 import S3Boto3Storage
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.files.storage import default_storage
 import json
-import os
-import sys, traceback
 
 class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
     model = DocumentContainer
@@ -30,12 +27,10 @@ class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
 class ImportFromDriveView(LoginRequiredMixin, View):
     login_url = 'login'
     template_name = 'forms/import-google-drive-folder.html'
-
     def get(self, request):
         # Get folders (only folders) from Google Drive account
         drive = DriveAPI(request=request)
         if not drive.has_valid_creds():
-            print('drive connection creds expired; refreshing')
             drive.refresh()
             request.session['creds'] = drive.creds
             url = drive.get_authorization_url()[0]
@@ -54,85 +49,25 @@ class ImportFromDriveView(LoginRequiredMixin, View):
     def post(self, request):
         try:
             data = json.loads(request.body.decode())
-        except Exception as e:
-            print(e)
-            return redirect('profile')
-        selected_drive_folder_id = data['folderId']
-        selected_drive_folder_name = data['folderName']
-        if not selected_drive_folder_name or not selected_drive_folder_id:
-            return JsonResponse({'result': 'drive folder id or name not provided'})
-        drive = DriveAPI(request=request)
-        if not drive.has_valid_creds():
-            return JsonResponse({'result': 'drive not connected'})
-        if not drive.service_connected():
-            drive.connect_drive_service()
-
-        try:
-            files_in_selected_folder = drive.get_files_in_folder(folder_id=selected_drive_folder_id)
-            relative_folder_path = f'/media/documents/{request.user.username}'
-            futil = FileUtility()
-            full_folder_path = futil.generate_path_to_user_document_folder(username=request.user.username)
-            # create a document container with same name as folder
-            document_container = DocumentContainer(
-                name=selected_drive_folder_name,
-                user=request.user
+            task_result = import_drive_folder.delay(
+                userid=request.user.id,
+                username=request.user.username,
+                folder_id=data['folderId'],
+                folder_name=data['folderName']
             )
-            document_container.save()
-            for f in files_in_selected_folder:
-                _fname = f.get('name') + ".pdf"
-                clean_filename = futil.clean_filename(filename=_fname)
-                clean_filepath = f'{full_folder_path}/{clean_filename}'
-                # Download file as a pdf from drive
-                download_success = drive.download_file_as_pdf(
-                    file_id=f.get('id'),
-                    parent_folder_path=full_folder_path,
-                    file_name=clean_filename)
-
-                if download_success:
-                    print('download successful; creating doc')
-                    new_doc = Document(
-                        notes='',
-                        title=clean_filename,
-                        location=f'{relative_folder_path}/{clean_filename}',
-                        user=self.request.user,
-                    )
-                    print('created doc')
-                    # associate saved file with saved object
-                    print(f'opening clean_filepath={clean_filepath}')
-                    with default_storage.open(clean_filepath, 'rb') as file:
-                        # The default behaviour of Django's Storage class
-                        # is to append a series of random characters to
-                        # the end of the filename when the filename already exists which means
-                        # we'll need to rename the actual file to match the saved .file property after
-                        # calling .file.save()
-                        print(f'calling new_doc.file.save({clean_filename}, file)')
-                        new_doc.file.save(clean_filename, file)
-
-                    # Update the clean_filename and clean_filepath values to reflect the rename
-                    clean_filename = new_doc.get_filename()
-                    clean_filepath = f'{full_folder_path}/{clean_filename}'
-                    print(f'saving doc')
-                    new_doc.save()
-                    new_doc.containers.add(document_container.id)
-                    new_doc.save()
-                    print(f'creating page images(document_path={clean_filepath}')
-                    new_doc.create_page_images(document_path=clean_filepath)
-            result = 'success'
+            print(f'adding task {task_result.task_id} to session active_tasks')
+            add_task_to_session_active_tasks(request=request, task_id=task_result.task_id)
+            # method has been kicked off here but work is not done yet
+            msg = 'import process started'
         except Exception as e:
             print(e)
-            print("-"*60)
-            traceback.print_exc(file=sys.stdout)
-            print("-"*60)
-            result = f'failed: {e}'
-        return JsonResponse({'result': result})
-
-
+            msg = f'import not started: {e}'
+        return JsonResponse({'msg': msg, 'task_id': task_result.task_id})
 
 class DocumentContainerClearView(LoginRequiredMixin, View):
     def get(self, request):
         DocumentContainer.objects.filter(user=request.user).delete()
         return redirect('profile')
-
 
 class DocumentContainerUpdateView(LoginRequiredMixin, UpdateView):
     model = DocumentContainer

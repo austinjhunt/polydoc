@@ -1,0 +1,27 @@
+{% extends 'master.html' %}
+{% block content %}
+<div class="container p-5 task-status-page">
+    <h2>You have {{active_tasks|length }} active background tasks.</h2>
+    <hr/>
+    <div class="accordion tasks-accordion" id="tasksAccordion">
+        {% for task_id in active_tasks %}
+        <span class="task-id d-none" data-task-id="{{task_id}}" ></span>
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading-{{task_id}}">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{task_id}}" aria-expanded="true" aria-controls="collapse-{{task_id}}">
+              Task {{forloop.counter}}
+            </button>
+          </h2>
+          <div id="collapse-{{task_id}}" class="accordion-collapse collapse show" aria-labelledby="heading-{{task_id}}" data-bs-parent="#tasksAccordion">
+            <div class="accordion-body">
+                <div class='progress-wrapper-{{task_id}}'>
+                    <div id='progress-bar-{{task_id}}' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>
+                  </div>
+                  <div id="progress-bar-message-{{task_id}}">Waiting for progress to start...</div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+</div>
+{% endblock %}

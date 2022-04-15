@@ -5,27 +5,21 @@ class FileUtility:
     def __init__(self):
         self.s3_storage_active = (not settings.DEBUG)
 
-    def get_document_object_file_location(self, document_object, use_site_relative_path=False):
+    def get_document_object_file_location(self, document_object):
         """ Provided a Document object, return the file location using s3_storage_active boolean
-        to determine whether to use absolute or relative path. If use_site_relative_path=True, must use relative. """
+        to determine whether to use absolute or relative path. """
 
         if self.s3_storage_active:
             path = document_object.location.replace('/media/', 'media/')
-        elif use_site_relative_path:
-            # Document object location attribute is relative already (/media/documents/user/file.pdf)
-            path = document_object.location
         else:
-            path = document_object.location.replace('/media/', f'{settings.MEDIA_ROOT}/')
+            path = document_object.location.replace('/media/', f'')
         return path
 
-    def generate_path_to_user_document_folder(self, username, use_site_relative_path=False):
+    def generate_path_to_user_document_folder(self, username):
         """ Each user has their own folder (named with their username) in media/documents/;
-        use s3_storage_active boolean to determine if absolute or relative path.
-        If use_site_relative_path=True, must use relative. """
+        use s3_storage_active boolean to determine if absolute or relative path. """
         if self.s3_storage_active:
             path = f'media/documents/{username}'
-        elif use_site_relative_path:
-            path = f'/media/documents/{username}'
         else:
             path = f'{settings.MEDIA_ROOT}/documents/{username}'
         return path
@@ -42,17 +36,20 @@ class FileUtility:
     def remove_folder_recursive(self, folder_path):
         """ recursively remove a folder given its path """
         print(f'Recursively removing folder {folder_path}')
-        dirs, files = default_storage.listdir(folder_path)
-        if not folder_path.endswith('/'):
-            folder_path = f'{folder_path}/'
-        for file in files:
-            filepath = f'{folder_path}{file}'
-            print(f'deleting {filepath}')
-            default_storage.delete(filepath)
-        for dir in dirs:
-            new_dir = f'{folder_path}{dir}/'
-            print(f'going to new dir {new_dir}')
-            self.remove_folder_recursive(new_dir)
+        try:
+            dirs, files = default_storage.listdir(folder_path)
+            if not folder_path.endswith('/'):
+                folder_path = f'{folder_path}/'
+            for file in files:
+                filepath = f'{folder_path}{file}'
+                print(f'deleting {filepath}')
+                default_storage.delete(filepath)
+            for dir in dirs:
+                new_dir = f'{folder_path}{dir}/'
+                self.remove_folder_recursive(new_dir)
+            self.remove_file(folder_path)
+        except FileNotFoundError as e:
+            print(f'File not found. Not deleting {folder_path}')
 
 
     def remove_file(self, path):

@@ -32,7 +32,10 @@ urlpatterns = [
 
     # Multiview functionality
     path('multiview/<slug:container_id>', views.MultiView.as_view(), name='multiview'),
-    # utility
+
+    # Celery & Progress monitoring
+    path('task-status/view', views.TaskStatusView.as_view(), name='task-status-view'),
+    path('task-status/<slug:task_id>', views.get_progress, name='task_status'),
 
     # POST endpoint requires trailing slash for ajax call
     path('toggle-theme/', views.ToggleThemeView.as_view(), name='toggle-theme'),

@@ -11,17 +11,22 @@ from django.conf import settings
 import os
 import json
 import requests
-
 class DriveAPI:
 
-    def __init__(self, request):
+    def __init__(self, request=None, user_id=None):
         self.connected = False
         self.service = None
         self.secrets_from_json = None
         self._init_secrets_from_json()
         self.code = None
-        self.request = request
-        self.user_id = request.user.id
+
+        if request:
+            self.request = request
+            self.user_id = request.user.id
+        elif user_id:
+            self.request = None
+            self.user_id = user_id
+
         self.flow = None
         self.token_folder = f'{settings.GOOGLE_DRIVE_FOLDER}/tokens'
         self._ensure_folder_exists(self.token_folder)
@@ -60,7 +65,7 @@ class DriveAPI:
     def authorize(self,code=None):
         """ Update drive credentials for user """
         if not code:
-            # request a new token ; this will trigger AuthView which updates request.session['drivecode']
+            # request a new token
             # redirects user to google's auth endpoint which redirects to login
             # they login and then are redirected back to this app's auth view with a code
             # which can be used one time to obtain a token
@@ -70,7 +75,6 @@ class DriveAPI:
                 )
         else:
             print('code provided; fetching token with code')
-            # request a new token ; this will trigger AuthView which updates request.session['drivecode']
             response = self.fetch_token(code=code)
             print(f'response from fetch token = {response}')
             try:
@@ -223,7 +227,6 @@ class DriveAPI:
         if self.service == None:
             print("App not authenticated")
             return "0"
-
         response = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                                              fields='nextPageToken, files(id, name)').execute()
         print(response.get('files'))
@@ -234,31 +237,3 @@ class DriveAPI:
                 print(folder_id)
                 return folder_id
         return "0"
-
-
-'''
-folderId = drive.files().list(q = "mimeType = 'application/vnd.google-apps.folder' and name = 'thumbnails'", pageSize=10, fields="nextPageToken, files(id, name)").execute()
-# this gives us a list of all folders with that name
-folderIdResult = folderId.get('files', [])
-# however, we know there is only 1 folder with that name, so we just get the id of the 1st item in the list
-id = folderIdResult[0].get('id')
-
-# Now, using the folder ID gotten above, we get all the files from
-# that particular folder
-results = drive.files().list(q = "'" + id + "' in parents", pageSize=10, fields="nextPageToken, files(id, name)").execute()
-items = results.get('files', [])
-
-# Now we can loop through each file in that folder, and do whatever (in this case, download them and open them as images in OpenCV)
-for f in range(0, len(items)):
-    fId = items[f].get('id')
-    fileRequest = drive.files().get_media(fileId=fId)
-            fh = io.BytesIO()
-            downloader = MediaIoBaseDownload(fh, fileRequest)
-            done = False
-            while done is False:
-                status, done = downloader.next_chunk()
-    fh.seek(0)
-    fhContents = fh.read()
-
-    baseImage = cv2.imdecode(np.fromstring(fhContents, dtype=np.uint8), cv2.IMREAD_COLOR)
-'''
