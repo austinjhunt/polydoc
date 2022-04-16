@@ -216,13 +216,14 @@ if not DEBUG: # production
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', None)
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', None)
     AWS_STORAGE_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', None)
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_REGION_NAME = 'us-east-1'
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    print(f'DEFAULT_FILE_STORAGE={DEFAULT_FILE_STORAGE}')
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-GOOGLE_DRIVE_FOLDER = os.path.join(MEDIA_ROOT, 'drive')
+GOOGLE_DRIVE_FOLDER = os.path.join(MEDIA_ROOT, 'drive') if DEBUG else 'media/drive'
 GOOGLE_DRIVE_CREDENTIALS_JSON_FILE = os.path.join(BASE_DIR, 'drive', 'credentials.json')
 GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI = 'http://localhost:8000/drive/authenticate' if DEBUG else 'https://polydoc.xyz/drive/authenticate'
 GOOGLE_DRIVE_AUTHORIZATION_RESPONSE_URI = 'http://localhost:8000/profile' if DEBUG else 'https://polydoc.xyz/profile'

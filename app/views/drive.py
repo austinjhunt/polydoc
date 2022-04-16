@@ -8,7 +8,6 @@ class DriveView(LoginRequiredMixin, View):
         driveAPI = DriveAPI(request=request)
         if not driveAPI.has_valid_creds():
             driveAPI.authorize()
-            request.session['creds'] = driveAPI.creds
             url = driveAPI.get_authorization_url()[0]
             return redirect(url)
         else:

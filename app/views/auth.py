@@ -12,9 +12,15 @@ class LogoutView(LoginRequiredMixin, View):
     """ Logout """
     def get(self, request):
         # clear out the google token for the user
-        drive = DriveAPI(request=request)
-        drive.clear_user_creds()
-        logout(request)
+        try:
+            drive = DriveAPI(request=request)
+            drive.clear_user_creds()
+        except Exception as e:
+            print(e)
+        try:
+            logout(request)
+        except Exception as e:
+            print(e)
         return redirect('home')
 
 class RegisterView(FormView):

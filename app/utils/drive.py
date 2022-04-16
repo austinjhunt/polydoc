@@ -23,7 +23,6 @@ class DriveAPI:
         self.secrets_from_json = None
         self._init_secrets_from_json()
         self.code = None
-
         if request:
             self.request = request
             self.user_id = request.user.id
@@ -66,8 +65,15 @@ class DriveAPI:
         self.logger.error(msg, extra=self.prefix)
 
     def _init_secrets_from_json(self):
-        with open(settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE, 'r') as f:
-            self.secrets_from_json = dict(json.load(f))['web']
+        self.info(
+            f"Initializing OAuth creds from JSON file "
+            f"{settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE}"
+            )
+        try:
+            with open(settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE, 'r') as f:
+                self.secrets_from_json = dict(json.load(f))['web']
+        except Exception as e:
+            self.error(e)
 
     def _ensure_folder_exists(self, path):
         """ Given a path to a folder, ensure it exists"""
@@ -79,14 +85,24 @@ class DriveAPI:
         success = False
         if self.creds and self.creds.expired and self.creds.refresh_token:
             # token expired so refresh
+            self.info("Creds exist and are expired and refresh_token exists; refreshing")
             self.creds.refresh(Request())
             success = True
+        else:
+            if not self.creds:
+                self.error("Creds do not exist")
+            if self.creds and not self.creds.expired:
+                self.error("Creds exist and are expired")
+            if self.creds and not self.creds.refresh_token:
+                self.error("Creds exist and refresh_token missing")
+            self.error("Not refreshing")
+
         return success
 
     def authorize(self,code=None):
         """ Update drive credentials for user """
         if not code:
-            # request a new token
+            self.info(f'Requesting a new token' )
             # redirects user to google's auth endpoint which redirects to login
             # they login and then are redirected back to this app's auth view with a code
             # which can be used one time to obtain a token
@@ -95,9 +111,9 @@ class DriveAPI:
                 redirect_uri=settings.GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI,
                 )
         else:
-            print('code provided; fetching token with code')
+            self.info('Code provided; fetching token with code')
             response = self.fetch_token(code=code)
-            print(f'response from fetch token = {response}')
+            self.info(f'response from fetch token = {response}')
             try:
                 if 'refresh_token' in response:
                     refresh_token = response['refresh_token']
@@ -113,11 +129,12 @@ class DriveAPI:
                     )
                 self.save_creds_to_file()
             except Exception as e:
-                print(e)
+                self.info(e)
     
 
     def fetch_token(self, code=None, ):
         """ Custom POST request to fetch a token from token endpoint in Google auth """
+        self.info('Fetching token from Google auth token_uri')
         token_endpoint = self.secrets_from_json['token_uri']
         data = {
             'code': code,
@@ -128,7 +145,13 @@ class DriveAPI:
             self.secrets_from_json['client_id'],
             self.secrets_from_json['client_secret'],
         )
-        return requests.post(token_endpoint, data=data, auth=auth).json()
+        try:
+            response = requests.post(token_endpoint, data=data, auth=auth).json()
+            self.info(f"Token fetch response: {response}")
+        except Exception as e:
+            self.error(e)
+            response = None 
+        return response 
 
     def clear_user_creds(self): 
         """ Used when signing a user out of the app. no need to keep the Google token ;
@@ -136,39 +159,68 @@ class DriveAPI:
         self.info("Clearing user's google creds file")
         if default_storage.exists(self.access_token_file):
             default_storage.delete(self.access_token_file)
+        else:
+            self.error(f"User's creds file ({self.access_token_file}) does not exist")
 
     def load_creds_from_file(self):
-        # Read the token from the file and
-        # store it in the variable self.creds
+        """ Read the creds from the file and store it in the variable self.creds"""
         if os.path.exists(self.access_token_file):
-            with open(self.access_token_file, 'rb') as token:
-                self.creds = pickle.load(token)
+            try:
+                self.info(f"Reading creds from {self.access_token_file}")
+                with default_storage.open(self.access_token_file, 'rb') as token:
+                    self.creds = pickle.load(token)
+            except Exception as e:
+                self.error(e)
+        else:
+            self.error(f"{self.access_token_file} does not exist, cannot load creds")
 
     def save_creds_to_file(self):
         """ Save the current access token in pickle file for future usage """
-        with open(self.access_token_file, 'wb') as token:
-            pickle.dump(self.creds, token)
+        self.info(f"Saving credentials to file {self.access_token_file}")
+        try:
+            with default_storage.open(self.access_token_file, 'wb') as token:
+                pickle.dump(self.creds, token)
+            self.info(f'Successfully saved creds to {self.access_token_file}')
+        except Exception as e:
+            self.error(e)
 
     def has_valid_creds(self):
         """ set default to invalid """
+        self.info("Checking for valid Drive creds")
         self.load_creds_from_file()
-        return self.creds is not None and self.creds.valid
+        valid = self.creds is not None and self.creds.valid
+        self.info(f"creds valid? -> {valid}")
+        return valid 
 
     def service_connected(self):
         """ Return whether service is active / connected """
-        return self.service is not None
+        self.info("Checking if drive service is connected")
+        c = self.service is not None
+        self.info(f"Service connected? -> {c}")
+
 
     def connect_drive_service(self):
         """ Connect the drive service """
-        self.service = build('drive', 'v3', credentials=self.creds)
-        self.connected = True
+        self.info("Connecting Drive Service")
+        try:
+            self.service = build('drive', 'v3', credentials=self.creds)
+            self.connected = True 
+        except Exception as e:
+            self.error(e)
+            self.connected = False 
+        self.info(f"Drive Service Connected? -> {self.connected}")
 
     def get_authorization_url(self):
+        """ Get the authorization URL for drive """
         if not self.connected:
+            self.info("Not connected; getting authorization URL for Drive")
             return self.flow.authorization_url()
+        else:
+            self.info("Already connected")
 
     def _export_file_as_pdf(self, file_id):
         """ Export a Doc Editors file as a PDF (only works with Docs Editors files, e.g. Slides, Document, Sheet, etc.) """
+        self.info(f"Exporting file {file_id} as PDF with .export()")
         response = self.service.files().export(
                 fileId=file_id, mimeType='application/pdf')
         fh = io.BytesIO()
@@ -180,6 +232,7 @@ class DriveAPI:
 
     def _get_file(self, file_id):
         """ Simply get a file (fallback in case export operation fails) """
+        self.info(f"Getting file {file_id} with .get_media()")
         response = self.service.files().get_media(fileId=file_id)
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, response, chunksize=204800)
@@ -190,30 +243,29 @@ class DriveAPI:
 
     def download_file_as_pdf(self, file_id, parent_folder_path, file_name):
         """ Download a Drive file as a PDF"""
-        print(f'Downloading file to parent_folder_path={parent_folder_path}, file_name={file_name}')
+        self.info(f'Downloading file to parent_folder_path={parent_folder_path}, file_name={file_name}')
         #response = self.service.files().get_media(fileId=file_id)
         success = False
-        print(f'Downloading file with id={file_id}')
+        self.info(f'Downloading file with id={file_id}')
         fh = None
         try:
             fh = self._export_file_as_pdf(file_id)
         except Exception as e:
-            print('Export failed for file; falling back to "get file"')
+            self.info('Export failed for file; falling back to "get file"')
         try:
             fh = self._get_file(file_id)
         except Exception as e:
-            print(e)
+            self.info(e)
         if fh:
             fh.seek(0)
             default_storage.save(name=f'{parent_folder_path}/{file_name}', content=io.BytesIO())
             with default_storage.open(f'{parent_folder_path}/{file_name}', 'wb') as f:
-                print(f'shutil.copyfileobj(fh, f)')
+                self.info(f'shutil.copyfileobj(fh, f)')
                 shutil.copyfileobj(fh, f)
-                print(f'successfully created file')
-            print("File Downloaded")
+                self.info(f'successfully created file')
+            self.info("File Downloaded")
             success = True
         return success
-
 
     def get_files_in_folder(self, folder_id):
         """ Given a folder ID, pull a list of files in that folder  """
@@ -236,6 +288,7 @@ class DriveAPI:
 
     def get_folder_list(self):
         """ Get all folders on a user's drive account"""
+        self.info("Getting folder list from Drive account")
         folder_list = []
         page_token = None
         folders_mimeType = 'application/vnd.google-apps.folder'
@@ -244,26 +297,12 @@ class DriveAPI:
                                                  pageSize=100,
                                                  fields='nextPageToken, files(id, name)',
                                                  pageToken=page_token).execute()
-            for folder in response.get('files', []):
+            folders = response.get('files', [])
+            self.info(f"Retrieved {len(folders)} folders from Drive")
+            for folder in folders:
                 # each folder only has attributes id,name
                 folder_list.append(folder)
             page_token = response.get('nextPageToken', None)
             if page_token is None:
                 break
-
         return folder_list
-
-    def get_folder_id(self, folder_name):
-        if self.service == None:
-            print("App not authenticated")
-            return "0"
-        response = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
-                                             fields='nextPageToken, files(id, name)').execute()
-        print(response.get('files'))
-        for folder in response.get('files'):
-            print(f"Comparing \"{folder.get('name')}\" with \"{folder_name}\"")
-            if folder.get('name') == folder_name:
-                folder_id = folder.get('id')
-                print(folder_id)
-                return folder_id
-        return "0"

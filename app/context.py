@@ -1,4 +1,5 @@
 
+from app.utils import drive
 from .utils import DriveAPI
 
 def theme_context(request):
@@ -16,9 +17,11 @@ def theme_context(request):
         theme = request.session['theme']
     else:
         theme = "light-theme"
+    drive_authenticated = DriveAPI(request=request).has_valid_creds()
+    print(f'drive authenticated? -> {drive_authenticated}')
     return {
         'theme': theme,
         'show_loader': show_loader,
-        'drive_authenticated': DriveAPI(request=request).has_valid_creds(),
+        'drive_authenticated': drive_authenticated ,
         'active_tasks': active_tasks
         }
