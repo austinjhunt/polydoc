@@ -1,130 +1,204 @@
-{% extends 'master.html' %}
-{% block content %}
+{% extends 'master.html' %} {% block content %}
 <div class="container pt-5">
-    <div class="d-flex">
-        <div class="me-5">
-         <h1>Welcome to your profile, {{user.username}}</h1>
-        <h2>Use this page to upload &amp; download documents and create &amp; delete document containers </h2>
-        </div>
-        <div>
-            <a href="{% url 'document-clear' %}" class="btn btn-danger btn-sm m-1"
-            data-bs-toggle="tooltip"
-                            title="Delete all of my documents in PolyDoc; this does not affect files stored outside of PolyDoc">Delete All My Documents</a>
-            <a href="{% url 'document-container-clear'  %}" data-bs-toggle="tooltip"
-            title="Delete all of my document containers in PolyDoc; this does not affect folders stored outside of PolyDoc" class="btn btn-danger btn-sm m-1">Delete All My Containers</a>
-        </div>
+  <div class="d-flex">
+    <div class="me-5">
+      <h1>Welcome to your profile, {{user.username}}</h1>
+      <h2>
+        Use this page to upload &amp; download documents and create &amp; delete
+        document containers
+      </h2>
     </div>
-    <hr />
-    <div class="row">
-        <div class="col-sm-12 col-md-6">
-            <div class="rounded border-1 border p-4">
-                <div class="col-sm-12">
-                    <span> Your document containers</span>
-                    <span class="float-end mx-1"><a class="btn btn-sm btn-success"
-                            href="{% url 'create-document-container' %}">
-                            <i class="fa fa-plus fa-sm"></i>&nbsp;<i class="fa fa-box "></i> Add Container
-                        </a></span>
-                    {% if drive_authenticated %}
-
-                        <span class="float-end mx-1"><a class="btn btn-sm btn-success"
-                            href="{% url 'import-from-drive' %}" data-bs-toggle="tooltip"
-                            title="Import a folder of documents from your Google Drive into a document container">
-                            <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-box fa-sm "></i> Import from Drive
-                        </a></span>
-                    {% else %}
-                    <span class="float-end mx-1"><a class="btn btn-sm btn-dark"
-                        href="#" data-bs-toggle="tooltip"
-                        title="Cannot import from Google Drive, must connect to Drive first">
-                        <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-box fa-sm "></i> Import from Drive
-                    </a></span>
-                    {% endif %}
-                </div>
-                <hr />
-                {% for dc in user_document_containers %}
-                <div class="col doc badge pill m-1 bg-secondary shadow w-100 d-flex">
-                    <span class="text-start me-auto d-flex align-items-center">{{dc.name}} ({{dc.doc_count}} docs) </span>
-
-                     <div class="text-end ms-auto">
-                         <span><a class="btn btn-dark btn-sm" href="{% url 'multiview' dc.id %}" data-bs-toggle="tooltip"
-                            title="Simultaneously manage all documents in this container"><i class="fa fa-eye"></i><i
-                                class="fa fa-eye"></i> Multiview</a></span>
-                        <span><a href="{% url 'update-document-container' dc.id %}" class="btn btn-success btn-sm"
-                                title="update document container">
-                                Edit <i class="fa fa-edit"></i>
-                            </a></span>
-                        <span>
-                            <div class="dropdown d-inline-block">
-                                <a class="btn btn-sm btn-info dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-                                Export CSV
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                                <li><a class="dropdown-item" href="{% url 'export-document-container-summary' dc.id %}" >Summary</a></li>
-                                <li><a class="dropdown-item" href="{% url 'export-document-container-detail' dc.id %}">Detail (ZIP)</a></li>
-                                </ul>
-                            </div>
-                        </span>
-                        <span><a href="{% url 'delete-document-container' dc.id %}" class="btn btn-danger btn-sm"
-                                title="delete document container">
-                                Delete <i class="fa fa-trash"></i>
-                            </a></span>
-                        </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="col-sm-12 col-md-6">
-            <div class="rounded border-1 border p-4 ">
-                <div class="col-sm-12 row">
-                    <div class="col-sm-8">
-                        <p class="d-inline">Your documents</p>
-                    </div>
-                    <div class="col-sm-4 text-end">
-                        <div class="d-inline text-end mb-3">
-                            <a data-bs-toggle="tooltip" title="Upload documents into a container"
-                                class="btn btn-sm btn-success" href="{% url 'create-document' %}">
-                                <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-file"></i> Add Docs
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <hr />
-                <div class="row my-1">
-                    {% for doc in user_documents %}
-                    <div class="col doc badge pill m-1 bg-secondary shadow d-flex">
-                        <span class="text-start me-auto d-flex align-items-center">{{doc.title}} - {% if doc.num_pages == 1 %}
-                            1 page
-                            {% else %}
-                            {{ doc.num_pages }} pages
-                            {% endif %}</span>
-                        <div class="ms-auto text-end">
-                            <span><a href="{{doc.location}}" class="btn btn-primary btn-sm"><i class="fa fa-eye"></i>
-                                View</a></span>
-                        <span><a href="{% url 'update-document' doc.id %}" class="btn btn-success btn-sm"
-                                title="update document">
-                                Edit <i class="fa fa-edit"></i>
-                            </a></span>
-                        <span><a href="{% url 'document-export' doc.id %}" class="btn btn-info btn-sm"
-                                title="download CSV for this document">
-                                Export Doc CSV <i class="fa fa-download"></i>
-                            </a></span>
-                        <span><a href="{% url 'delete-document' doc.id %}" class="btn btn-danger btn-sm"
-                                title="delete document">
-                                Delete <i class="fa fa-trash"></i>
-                            </a></span>
-                        </div>
-
-                    </div>
-                    {% endfor %}
-                </div>
-
-            </div>
-
-        </div>
-
+    <div>
+      <a
+        href="{% url 'document-clear' %}"
+        class="btn btn-danger btn-sm m-1"
+        data-bs-toggle="tooltip"
+        title="Delete all of my documents in PolyDoc; this does not affect files stored outside of PolyDoc"
+        >Delete All My Documents</a
+      >
+      <a
+        href="{% url 'document-container-clear'  %}"
+        data-bs-toggle="tooltip"
+        title="Delete all of my document containers in PolyDoc; this does not affect folders stored outside of PolyDoc"
+        class="btn btn-danger btn-sm m-1"
+        >Delete All My Containers</a
+      >
     </div>
+  </div>
+  <hr />
+  <div class="row">
+    <div class="col-sm-12 col-md-6">
+      <div class="rounded border-1 border p-4">
+        <div class="col-sm-12">
+          <span>Your document containers</span>
+          <span class="float-end mx-1"
+            ><a
+              class="btn btn-sm btn-success"
+              href="{% url 'create-document-container' %}"
+            >
+              <i class="fa fa-plus fa-sm"></i>&nbsp;<i class="fa fa-box"></i>
+              Add Container
+            </a></span
+          >
+          {% if drive_authenticated %}
 
+          <span class="float-end mx-1"
+            ><a
+              class="btn btn-sm btn-success"
+              href="{% url 'import-from-drive' %}"
+              data-bs-toggle="tooltip"
+              title="Import a folder of documents from your Google Drive into a document container"
+            >
+              <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-box fa-sm"></i>
+              Import from Drive
+            </a></span
+          >
+          {% else %}
+          <span class="float-end mx-1"
+            ><a
+              class="btn btn-sm btn-dark"
+              href="#"
+              data-bs-toggle="tooltip"
+              title="Cannot import from Google Drive, must connect to Drive first"
+            >
+              <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-box fa-sm"></i>
+              Import from Drive
+            </a></span
+          >
+          {% endif %}
+        </div>
+        <hr />
+        {% for dc in user_document_containers %}
+        <div class="col doc badge pill m-1 bg-secondary shadow w-100 d-flex">
+          <span class="text-start me-auto d-flex align-items-center"
+            >{{dc.name}} ({{dc.doc_count}} docs)
+          </span>
 
-
-
+          <div class="text-end ms-auto">
+            <span
+              ><a
+                class="btn btn-dark btn-sm"
+                href="{% url 'multiview' dc.id %}"
+                data-bs-toggle="tooltip"
+                title="Simultaneously manage all documents in this container"
+                ><i class="fa fa-eye"></i><i class="fa fa-eye"></i> Multiview</a
+              ></span
+            >
+            <span
+              ><a
+                href="{% url 'update-document-container' dc.id %}"
+                class="btn btn-success btn-sm"
+                title="update document container"
+              >
+                Edit <i class="fa fa-edit"></i> </a
+            ></span>
+            <span>
+              <div class="dropdown d-inline-block">
+                <a
+                  class="btn btn-sm btn-info dropdown-toggle"
+                  href="#"
+                  role="button"
+                  id="dropdownMenuLink"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Export CSV
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="{% url 'export-document-container-summary' dc.id %}"
+                      >Summary</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="{% url 'export-document-container-detail' dc.id %}"
+                      >Detail (ZIP)</a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </span>
+            <span
+              ><a
+                href="{% url 'delete-document-container' dc.id %}"
+                class="btn btn-danger btn-sm"
+                title="delete document container"
+              >
+                Delete <i class="fa fa-trash"></i> </a
+            ></span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="col-sm-12 col-md-6">
+      <div class="rounded border-1 border p-4">
+        <div class="col-sm-12 row">
+          <div class="col-sm-8">
+            <p class="d-inline">Your documents</p>
+          </div>
+          <div class="col-sm-4 text-end">
+            <div class="d-inline text-end mb-3">
+              <a
+                data-bs-toggle="tooltip"
+                title="Upload documents into a container"
+                class="btn btn-sm btn-success"
+                href="{% url 'create-document' %}"
+              >
+                <i class="fa fa-plus"></i>&nbsp;<i class="fa fa-file"></i> Add
+                Docs
+              </a>
+            </div>
+          </div>
+        </div>
+        <hr />
+        <div class="row my-1">
+          {% for doc in user_documents %}
+          <div class="col doc badge pill m-1 bg-secondary shadow d-flex">
+            <span class="text-start me-auto d-flex align-items-center"
+              >{{doc.title}} - {% if doc.num_pages == 1 %} 1 page {% else %} {{
+              doc.num_pages }} pages {% endif %}</span
+            >
+            <div class="ms-auto text-end">
+              <span
+                ><a href="{{doc.location}}" class="btn btn-primary btn-sm"
+                  ><i class="fa fa-eye"></i> View</a
+                ></span
+              >
+              <span
+                ><a
+                  href="{% url 'update-document' doc.id %}"
+                  class="btn btn-success btn-sm"
+                  title="update document"
+                >
+                  Edit <i class="fa fa-edit"></i> </a
+              ></span>
+              <span
+                ><a
+                  href="{% url 'document-export' doc.id %}"
+                  class="btn btn-info btn-sm"
+                  title="download CSV for this document"
+                >
+                  Export Doc CSV <i class="fa fa-download"></i> </a
+              ></span>
+              <span
+                ><a
+                  href="{% url 'delete-document' doc.id %}"
+                  class="btn btn-danger btn-sm"
+                  title="delete document"
+                >
+                  Delete <i class="fa fa-trash"></i> </a
+              ></span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

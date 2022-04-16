@@ -47,11 +47,23 @@ urlpatterns = [
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 
-## If re-creating DB, uncomment this; comment the above; leave path import uncommented
-## then run
-## python manage.py makemigrations && python manage.py migrate app
+## If re-creating DB, uncomment below; comment all of the above; 
+
+## Why? Well, when you run python manage.py makemigrations && python manage.py migrate, 
+## that command executes this file among others and this file imports views and views makes 
+## reference to the models objects, which, you guessed it, are not in the database if you haven't 
+## made migrations and migrated them yet
+
+## so we fake some URLs without referencing any database objects to bypass that and then revert those changes
+## after migrating 
+
+# from django.urls import path
 # def fake(request):
 #     return "fake"
 # urlpatterns = [
 #     path('', fake, name='fake')
 # ]
+
+## then run
+## python manage.py makemigrations && python manage.py migrate app
+# when done, uncomment the original code and re-comment out this fake code 

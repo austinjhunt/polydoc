@@ -222,8 +222,8 @@ if not DEBUG: # production
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-GOOGLE_DRIVE_FOLDER = f'{BASE_DIR}/drive'
-GOOGLE_DRIVE_CREDENTIALS_JSON_FILE = f'{BASE_DIR}/drive/credentials.json'
+GOOGLE_DRIVE_FOLDER = os.path.join(MEDIA_ROOT, 'drive')
+GOOGLE_DRIVE_CREDENTIALS_JSON_FILE = os.path.join(BASE_DIR, 'drive', 'credentials.json')
 GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI = 'http://localhost:8000/drive/authenticate' if DEBUG else 'https://polydoc.xyz/drive/authenticate'
 GOOGLE_DRIVE_AUTHORIZATION_RESPONSE_URI = 'http://localhost:8000/profile' if DEBUG else 'https://polydoc.xyz/profile'
 # Only use heroku configuration if application currently running on heroku

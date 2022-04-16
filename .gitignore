@@ -2,5 +2,6 @@ venv
 __pycache__
 *.sqlite3
 media/documents
+media/drive
 .env
 *.log

@@ -6,10 +6,14 @@ from django.views.generic import View, FormView
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
+from ..utils.drive import DriveAPI
 
 class LogoutView(LoginRequiredMixin, View):
     """ Logout """
     def get(self, request):
+        # clear out the google token for the user
+        drive = DriveAPI(request=request)
+        drive.clear_user_creds()
         logout(request)
         return redirect('home')
 

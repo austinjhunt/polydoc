@@ -35,16 +35,9 @@ class DriveAPI:
         self.token_folder = f'{settings.GOOGLE_DRIVE_FOLDER}/tokens'
         self._ensure_folder_exists(self.token_folder)
         self.access_token_file = f'{self.token_folder}/user-{self.user_id}-access.pickle'
-        self.refresh_token_file = f'{self.token_folder}/user-{self.user_id}-refresh.pickle'
         self.scopes = ['https://www.googleapis.com/auth/drive']
-        # Access token for drive resource access
+        # Access token for drive resource access; to be stored in access_token_file 
         self.creds = None
-
-        # The file token.pickle stores the
-        # user's access and refresh tokens. It is
-        # created automatically when the authorization
-        # flow completes for the first time.
-
         if os.path.exists(self.access_token_file):
             self.load_creds_from_file()
 
@@ -121,7 +114,7 @@ class DriveAPI:
                 self.save_creds_to_file()
             except Exception as e:
                 print(e)
-
+    
 
     def fetch_token(self, code=None, ):
         """ Custom POST request to fetch a token from token endpoint in Google auth """
@@ -137,6 +130,12 @@ class DriveAPI:
         )
         return requests.post(token_endpoint, data=data, auth=auth).json()
 
+    def clear_user_creds(self): 
+        """ Used when signing a user out of the app. no need to keep the Google token ;
+        user will need to re-authorize after logging back in """
+        self.info("Clearing user's google creds file")
+        if default_storage.exists(self.access_token_file):
+            default_storage.delete(self.access_token_file)
 
     def load_creds_from_file(self):
         # Read the token from the file and
