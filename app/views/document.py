@@ -7,11 +7,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 import json
 import csv
 import logging 
+from django.conf import settings
 logger = logging.getLogger('PolyDoc')
 
-class DocumentUpdateView(LoginRequiredMixin, CreateView):
-    def get(self, request):
-        pass
 
 class DocumentDeleteView(LoginRequiredMixin, DeleteView):
     model = Document
@@ -154,6 +152,7 @@ class DocumentCreateView(LoginRequiredMixin, View):
                 location=f'{relative_folder_path}/{clean_filename}',
                 user=request.user,
             )
+            logger.info(f'Saving doc with filename {clean_filename}')
             new_doc.file.save(clean_filename, f.file)
             new_doc.save()
             for container_id in document_containers:

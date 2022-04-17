@@ -122,6 +122,7 @@ class Page(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
     notes = models.TextField(default='')
+    s3_private_image_url = models.URLField(max_length=500,default="")
 
     def get_filepath(self):
         """ Get path to file """

@@ -341,21 +341,24 @@ class DriveAPI:
                     # associate saved file with saved object
                     self.info(f'opening clean_filepath={clean_filepath}')
                     with default_storage.open(clean_filepath, 'rb') as file:
-                        # The default behaviour of Django's Storage class
-                        # is to append a series of random characters to
-                        # the end of the filename when the filename already exists
-                        # so delete original file after calling save()
                         self.info(f'calling new_doc.file.save({clean_filename}, file)')
                         new_doc.file.save(clean_filename, file)
-                    self.info(f'removing file {clean_filepath} (extra file)')
-                    futil.remove_file(clean_filepath)
-                    # Update the clean_filename and clean_filepath values to reflect the rename
-                    clean_filename = new_doc.get_filename()
-                    clean_filepath = f'{full_folder_path}/{clean_filename}'
                     self.info(f'saving doc')
                     new_doc.save()
                     new_doc.containers.add(document_container.id)
                     new_doc.save()
+                    
+                    if settings.DEBUG:
+                        self.info(f'Using FileSystemStorage, so removing extra file {clean_filepath}')
+                        # The default behaviour of Django's Storage class
+                        # is to append a series of random characters to
+                        # the end of the filename when the filename already exists
+                        # so delete original file after calling save()
+                        futil.remove_file(clean_filepath)
+                        # Update the clean_filename and clean_filepath values to reflect the rename
+                        clean_filename = new_doc.get_filename()
+                        clean_filepath = f'{full_folder_path}/{clean_filename}'
+                    
                     self.info(f'creating page images(document_path={clean_filepath}')
                     new_doc.create_page_images(document_path=clean_filepath)
             result = 'Success'

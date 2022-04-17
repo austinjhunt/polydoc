@@ -5,6 +5,7 @@ logger = logging.getLogger('PolyDoc')
 def theme_context(request):
     # determine if first request or not
     show_loader = False
+    use_s3 = not settings.DEBUG 
     if not 'active' in request.session:
         show_loader = True
         request.session['active'] = True
@@ -25,6 +26,7 @@ def theme_context(request):
     return {
         'theme': theme,
         'show_loader': show_loader,
-        'drive_authenticated': drive_authenticated ,
+        'drive_authenticated': drive_authenticated, 
+        'use_s3': use_s3
         #'active_tasks': active_tasks
         }

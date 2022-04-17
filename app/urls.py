@@ -25,7 +25,6 @@ urlpatterns = [
 
     # Documents
     path('document/create', views.DocumentCreateView.as_view(), name='create-document'),
-    path('document/update/<slug:pk>', views.DocumentUpdateView.as_view(), name='update-document'),
     path('document/delete/<slug:pk>', views.DocumentDeleteView.as_view(), name='delete-document'),
     path('document/<slug:pk>/pages', views.DocumentPagesView.as_view(), name='document-pages'),
     path('document/<slug:pk>/save-notes/', views.DocumentSaveNotesView.as_view(), name='document-save-notes'),

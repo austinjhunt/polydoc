@@ -15,6 +15,8 @@ from dotenv import load_dotenv
 import json 
 import logging 
 import redis 
+import boto3
+from botocore.client import Config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -87,6 +89,10 @@ LOGGING = {
             'level': 'INFO',
         },
         'FileUtility': {
+            'handlers': ['stream'],
+            'level': 'INFO',
+        },
+        'S3Utility': {
             'handlers': ['stream'],
             'level': 'INFO',
         },
@@ -246,16 +252,25 @@ try:
     # REDIS = redis.StrictRedis.from_url(REDIS_URL)
     ###
 
-
-
-
     if not DEBUG: # production
+         ## BEGIN S3 SETTINGS ##
         AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', None)
         AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', None)
         AWS_STORAGE_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', None)
         AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
         AWS_S3_REGION_NAME = 'us-east-1'
+        AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+        AWS_S3_SIGNATURE_VERSION = 's3v4'
+        S3_CLIENT = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_S3_REGION_NAME,
+            config=Config(signature_version=AWS_S3_SIGNATURE_VERSION)
+            )
         DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+        ## END S3 SETTINGS ###
+
     # Default primary key field type
     # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
     DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -277,6 +292,52 @@ try:
         # pass logging=False to prevent heroku from overriding logging config above
         django_heroku.settings(locals(), logging=False)
         logger.info('using heroku settings')
+
 except Exception as e:
     logger.error(e)
 
+def get_cache():
+  try:
+    servers = os.environ['MEMCACHIER_SERVERS']
+    username = os.environ['MEMCACHIER_USERNAME']
+    password = os.environ['MEMCACHIER_PASSWORD']
+    return {
+      'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache',
+        # TIMEOUT is not the connection timeout! It's the default expiration
+        # timeout that should be applied to keys! Setting it to `None`
+        # disables expiration.
+        'TIMEOUT': 302400,
+        'LOCATION': servers,
+        'OPTIONS': {
+          'binary': True,
+          'username': username,
+          'password': password,
+          'behaviors': {
+            # Enable faster IO
+            'no_block': True,
+            'tcp_nodelay': True,
+            # Keep connection alive
+            'tcp_keepalive': True,
+            # Timeout settings
+            'connect_timeout': 2000, # ms
+            'send_timeout': 750 * 1000, # us
+            'receive_timeout': 750 * 1000, # us
+            '_poll_timeout': 2000, # ms
+            # Better failover
+            'ketama': True,
+            'remove_failed': 1,
+            'retry_timeout': 2,
+            'dead_timeout': 30,
+          }
+        }
+      }
+    }
+  except:
+    return {
+      'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
+      }
+    }
+
+CACHES = get_cache()

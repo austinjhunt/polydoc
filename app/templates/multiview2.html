@@ -13,7 +13,7 @@
                     data-pageindex="{{forloop.counter}}">
                     <div class="card-body">
                         <div class="page-image">
-                            <img src="{{page.image.url}}" id="page-{{page.id}}-image" class="h-100 w-100">
+                            <img src="{% if use_s3 %} {{page.s3_private_image_url}} {% else %} {{page.image.url}} {% endif %}" id="page-{{page.id}}-image" class="h-100 w-100">
                         </div>
                     </div>
                     <div class="card-footer text-center ">
@@ -83,7 +83,7 @@
                         data-pageindex="{{forloop.counter}}">
                         <div class="card-body">
                             <div class="page-image">
-                                <img src="{{page.image.url}}" id="large-page-{{page.id}}-image" class="h-100 w-100">
+                                <img src="{% if use_s3 %} {{page.s3_private_image_url}} {% else %} {{page.image.url}} {% endif %} " id="large-page-{{page.id}}-image" class="h-100 w-100">
                             </div>
                         </div>
                         <div class="card-footer text-center ">
