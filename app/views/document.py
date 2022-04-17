@@ -6,6 +6,8 @@ from django.views.generic import View, CreateView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 import json
 import csv
+import logging 
+logger = logging.getLogger('PolyDoc')
 
 class DocumentUpdateView(LoginRequiredMixin, CreateView):
     def get(self, request):
@@ -13,7 +15,7 @@ class DocumentUpdateView(LoginRequiredMixin, CreateView):
 
 class DocumentDeleteView(LoginRequiredMixin, DeleteView):
     model = Document
-    success_url = 'profile'
+    success_url = 'dash'
     login_url = 'login'
     template_name = 'forms/delete-document.html'
 
@@ -32,7 +34,7 @@ class DocumentDeleteView(LoginRequiredMixin, DeleteView):
                 }
             )
         except Exception as e:
-            print(e)
+            logger.error(e)
             return redirect('home')
 
     def post(self, request, pk):
@@ -40,7 +42,7 @@ class DocumentDeleteView(LoginRequiredMixin, DeleteView):
         if not doc.user == request.user:
             raise Http404
         doc.delete()  # will auto delete related pages
-        return redirect('profile')
+        return redirect('dash')
 
 
 class DocumentPagesView(LoginRequiredMixin, DetailView):
@@ -86,7 +88,7 @@ class DocumentSaveNotesView(LoginRequiredMixin, View):
                     page_object.save()
                     num_pages_saved += 1
                 except Exception as e:
-                    print(e)
+                    logger.error(e)
                     num_pages_failed += 1
             if num_pages_failed == 0:
                 msg = f'Successfully saved notes for {num_pages_saved} pages'
@@ -111,12 +113,12 @@ class DocumentClearView(LoginRequiredMixin, View):
         try:
             Document.objects.filter(user=request.user).delete()
         except Exception as e:
-            print(e)
-        return redirect('profile')
+            logger.error(e)
+        return redirect('dash')
 
 class DocumentCreateView(LoginRequiredMixin, View):
     login_url = 'login'
-    success_url = 'profile'
+    success_url = 'dash'
 
     def get(self, request):
         return render(
@@ -135,7 +137,7 @@ class DocumentCreateView(LoginRequiredMixin, View):
         files = request.FILES  # MultiValueDict with 'file' key
         files = files.getlist('file')  # list of <InMemoryUploadedFile>
         if len(files) == 0:
-            return redirect('profile')
+            return redirect('dash')
         # Will be used to serve on front end.
         relative_folder_path = f'/media/documents/{request.user.username}'
 
@@ -161,7 +163,7 @@ class DocumentCreateView(LoginRequiredMixin, View):
             new_doc.create_page_images(
                 document_path=f'{user_documents_folder_path}/{clean_filename}'
             )
-        return redirect('profile')
+        return redirect('dash')
 
 class DocumentExportView(LoginRequiredMixin, View):
     def get(self, request, pk):
@@ -178,7 +180,7 @@ class DocumentExportView(LoginRequiredMixin, View):
                 writer.writerow([page.index, page.notes])
             return response
         else:
-            return redirect('profile')
+            return redirect('dash')
 
 class DocumentGradeView(LoginRequiredMixin, View):
     def post(self, request, pk):
@@ -196,7 +198,7 @@ class DocumentGradeView(LoginRequiredMixin, View):
                 doc.save()
                 result = f'{doc.title} grade updated to {grade}'
             except Exception as e:
-                print(e)
+                logger.error(e)
                 result = e
             return JsonResponse({'result': result})
         else:

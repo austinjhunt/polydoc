@@ -1,6 +1,6 @@
 from wsgiref.util import FileWrapper
-from ..utils import DriveAPI,  add_task_to_session_active_tasks
-from ..tasks import import_drive_folder
+from ..utils import DriveAPI
+# from ..tasks import import_drive_folder reverting to synchronous for now 
 from ..models import DocumentContainer, Document, Page
 from ..forms import DocumentContainerForm
 from django.shortcuts import redirect, render
@@ -11,11 +11,13 @@ import json
 import csv
 import io
 import zipfile
+import logging 
+logger = logging.getLogger('PolyDoc')
 
 class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
     model = DocumentContainer
     form_class = DocumentContainerForm
-    success_url = 'profile'
+    success_url = 'dash'
     login_url = 'login'
     template_name = 'forms/create-document-container.html'
 
@@ -25,7 +27,7 @@ class DocumentContainerCreateView(LoginRequiredMixin, CreateView):
             name=form.cleaned_data['name'],
             user=self.request.user
         ).save()
-        return redirect('profile')
+        return redirect('dash')
 
 class DocumentContainerExportSummary(LoginRequiredMixin, View):
     def get(self, request, pk):
@@ -39,11 +41,11 @@ class DocumentContainerExportSummary(LoginRequiredMixin, View):
             writer = csv.writer(response)
             writer.writerow(['Document', 'Grade'])
             for doc in Document.objects.filter(containers__in=[dc.id]):
-                print(doc)
+                logger.info(doc)
                 writer.writerow([doc.title, doc.grade])
             return response
         else:
-            return redirect('profile')
+            return redirect('dash')
 
 class DocumentContainerExportDetail(LoginRequiredMixin, View):
     def build_doc_csv(self, doc):
@@ -81,7 +83,7 @@ class DocumentContainerExportDetail(LoginRequiredMixin, View):
             response['Content-Disposition'] = f'attachment; filename={dc.name.replace(" ","-").lower()}.zip'
             return response
         else:
-            return redirect('profile')
+            return redirect('dash')
 
 class ImportFromDriveView(LoginRequiredMixin, View):
     login_url = 'login'
@@ -89,6 +91,7 @@ class ImportFromDriveView(LoginRequiredMixin, View):
     def get(self, request):
         # Get folders (only folders) from Google Drive account
         drive = DriveAPI(request=request)
+        drive.refresh()
         if not drive.has_valid_creds():
             drive.refresh()
             request.session['creds'] = drive.creds
@@ -108,30 +111,40 @@ class ImportFromDriveView(LoginRequiredMixin, View):
     def post(self, request):
         try:
             data = json.loads(request.body.decode())
-            task_result = import_drive_folder.delay(
+            #logger.info('Creating task')
+            # task_result = import_drive_folder.delay(
+            #     userid=request.user.id,
+            #     username=request.user.username,
+            #     folder_id=data['folderId'],
+            #     folder_name=data['folderName'],
+            # ) 
+            # logger.info(f'Created task {task_result.task_id}')
+            # method has been kicked off here but work is not done yet
+            # msg = 'import process started'
+            drive =  DriveAPI(request=request)
+            drive.import_drive_folder(
                 userid=request.user.id,
                 username=request.user.username,
                 folder_id=data['folderId'],
                 folder_name=data['folderName']
             )
-            print(f'adding task {task_result.task_id} to session active_tasks')
-            add_task_to_session_active_tasks(request=request, task_id=task_result.task_id)
-            # method has been kicked off here but work is not done yet
-            msg = 'import process started'
+            msg = 'drive import successful'
         except Exception as e:
-            print(e)
-            msg = f'import not started: {e}'
-        return JsonResponse({'msg': msg, 'task_id': task_result.task_id})
+            logger.error(e)
+            msg = f'import failed'
+        # return JsonResponse({'msg': msg, 'task_id': task_result.task_id})
+        return JsonResponse({'msg': msg})
+        
 
 class DocumentContainerClearView(LoginRequiredMixin, View):
     def get(self, request):
         DocumentContainer.objects.filter(user=request.user).delete()
-        return redirect('profile')
+        return redirect('dash')
 
 class DocumentContainerUpdateView(LoginRequiredMixin, UpdateView):
     model = DocumentContainer
     form_class = DocumentContainerForm
-    success_url = 'profile'
+    success_url = 'dash'
     login_url = 'login'
     template_name = 'forms/update-document-container.html'
 
@@ -139,16 +152,16 @@ class DocumentContainerUpdateView(LoginRequiredMixin, UpdateView):
         # get object id
         object_id = self.request.POST.get('objectid', None)
         if object_id:
-            print(f'Object ID is {object_id}')
+            logger.info(f'Object ID is {object_id}')
             doc = DocumentContainer.objects.get(id=object_id)
             doc.name = form.cleaned_data['name']
             doc.save()
-        return redirect('profile')
+        return redirect('dash')
 
 
 class DocumentContainerDeleteView(LoginRequiredMixin, DeleteView):
     model = DocumentContainer
-    success_url = 'profile'
+    success_url = 'dash'
     login_url = 'login'
     template_name = 'forms/delete-document-container.html'
 
@@ -177,7 +190,7 @@ class DocumentContainerDeleteView(LoginRequiredMixin, DeleteView):
                 }
             )
         except Exception as e:
-            print(e)
+            logger.error(e)
             return redirect('home')
 
     def post(self, request, pk):
@@ -185,4 +198,4 @@ class DocumentContainerDeleteView(LoginRequiredMixin, DeleteView):
         if not doc_container.user == request.user:
             raise Http404
         doc_container.delete()
-        return redirect('profile')
+        return redirect('dash')

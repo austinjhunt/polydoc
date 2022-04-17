@@ -79,11 +79,8 @@ let importDriveFolderAsContainer = (folderId, folderName) => {
     },
   })
     .then((response) => response.json())
-    .then((data) => {
-      setTimeout(() => {
-        location.href = "/profile";
-      }, 3000);
-    });
+    .then(data=>{console.log(data); location.href='/dash';})
+    
 };
 
 document.addEventListener("DOMContentLoaded", function () {

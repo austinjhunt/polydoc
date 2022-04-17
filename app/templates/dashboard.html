@@ -2,33 +2,26 @@
 <div class="container pt-5">
   <div class="d-flex">
     <div class="me-5">
-      <h1>Welcome to your profile, {{user.username}}</h1>
-      <h2>
+      <h3>Welcome to your dashboard, {{user.username}}</h3>
+      <h4>
         Use this page to upload &amp; download documents and create &amp; delete
         document containers
-      </h2>
-    </div>
-    <div>
-      <a
-        href="{% url 'document-clear' %}"
-        class="btn btn-danger btn-sm m-1"
-        data-bs-toggle="tooltip"
-        title="Delete all of my documents in PolyDoc; this does not affect files stored outside of PolyDoc"
-        >Delete All My Documents</a
-      >
-      <a
-        href="{% url 'document-container-clear'  %}"
-        data-bs-toggle="tooltip"
-        title="Delete all of my document containers in PolyDoc; this does not affect folders stored outside of PolyDoc"
-        class="btn btn-danger btn-sm m-1"
-        >Delete All My Containers</a
-      >
+      </h4>
     </div>
   </div>
   <hr />
   <div class="row">
     <div class="col-sm-12 col-md-6">
       <div class="rounded border-1 border p-4">
+        <div class="text-end mb-3">
+          <a
+            href="{% url 'document-container-clear'  %}"
+            data-bs-toggle="tooltip"
+            title="Delete all of my document containers in PolyDoc; this does not affect folders stored outside of PolyDoc"
+            class="btn btn-danger btn-sm m-1"
+            >Delete All My Containers</a
+          >
+        </div>
         <div class="col-sm-12">
           <span>Your document containers</span>
           <span class="float-end mx-1"
@@ -70,8 +63,8 @@
         <hr />
         {% for dc in user_document_containers %}
         <div class="col doc badge pill m-1 bg-secondary shadow w-100 d-flex">
-          <span class="text-start me-auto d-flex align-items-center"
-            >{{dc.name}} ({{dc.doc_count}} docs)
+          <span class="text-start me-auto d-flex align-items-center">
+            {{dc.name}} ({{dc.doc_count}} docs)
           </span>
 
           <div class="text-end ms-auto">
@@ -137,6 +130,15 @@
     </div>
     <div class="col-sm-12 col-md-6">
       <div class="rounded border-1 border p-4">
+        <div class="text-end mb-3">
+          <a
+            href="{% url 'document-clear' %}"
+            class="btn btn-danger btn-sm m-1"
+            data-bs-toggle="tooltip"
+            title="Delete all of my documents in PolyDoc; this does not affect files stored outside of PolyDoc"
+            >Delete All My Documents</a
+          >
+        </div>
         <div class="col-sm-12 row">
           <div class="col-sm-8">
             <p class="d-inline">Your documents</p>
@@ -160,8 +162,7 @@
           {% for doc in user_documents %}
           <div class="col doc badge pill m-1 bg-secondary shadow d-flex">
             <span class="text-start me-auto d-flex align-items-center"
-              >{{doc.title}} - {% if doc.num_pages == 1 %} 1 page {% else %} {{
-              doc.num_pages }} pages {% endif %}</span
+              >{{doc.title}} - {% if doc.num_pages == 1 %} 1 page {% else %} {{doc.num_pages }} pages {% endif %}</span
             >
             <div class="ms-auto text-end">
               <span

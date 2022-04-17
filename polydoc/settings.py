@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-
+import json 
+import logging 
+import redis 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -64,19 +66,44 @@ LOGGING = {
             'filename': 'polydoc.log',
             'formatter': 'verbose'
         },
+        'stream': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
     },
     'loggers': {
         'django': {
-            'handlers':['file'],
+            'handlers':['stream'],
             'propagate': True,
-            'level':'DEBUG',
+            'level':'INFO',
         },
-        'POLYDOC': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
+        'PolyDoc': {
+            'handlers': ['stream'],
+            'level': 'INFO',
         },
+        'Models': {
+            'handlers': ['stream'],
+            'level': 'INFO',
+        },
+        'FileUtility': {
+            'handlers': ['stream'],
+            'level': 'INFO',
+        },
+        'DriveAPI': {
+            'handlers': ['stream'],
+            'propagate': False, 
+            'level': 'DEBUG'
+        },
+        'Celery': {
+            'handlers': ['stream'],
+            'propagate': False, 
+            'level': 'DEBUG'
+        }
     }
 }
+
+logger = logging.getLogger('PolyDoc')
 
 
 
@@ -91,9 +118,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles','django_browser_reload',
     'app',
     'compressor',
-    'celery_progress',
-    'celery',
-    'django_celery_results',
+    # reverting to synchronous processing for now 
+    # 'celery_progress',
+    # 'celery',
+    # 'django_celery_results',
     'storages'
 ]
 
@@ -174,63 +202,81 @@ USE_I18N = True
 
 USE_TZ = True
 
+try:
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.0/howto/static-files/
+    # Static files (CSS, JavaScript, Images)
+    # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# Simplified static file serving.
-# https://warehouse.python.org/project/whitenoise/
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-COMPRESS_ENABLED = True
-COMPRESS_ROOT = STATIC_ROOT
-COMPRESS_OFFLINE = True
-COMPRESS_OUTPUT_DIR = 'staticfiles'
-COMPRESS_CSS_FILTERS = ["compressor.filters.cssmin.CSSMinFilter"]
+    STATIC_URL = '/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    # Simplified static file serving.
+    # https://warehouse.python.org/project/whitenoise/
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    COMPRESS_ENABLED = True
+    COMPRESS_ROOT = STATIC_ROOT
+    COMPRESS_OFFLINE = True
+    COMPRESS_OUTPUT_DIR = 'staticfiles'
+    COMPRESS_CSS_FILTERS = ["compressor.filters.cssmin.CSSMinFilter"]
 
-# Testing
-TEST_ROOT = f'{BASE_DIR}/app/tests'
+    # Testing
+    TEST_ROOT = f'{BASE_DIR}/app/tests'
 
-STATICFILES_FINDERS = (
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    # other finders..
-    'compressor.finders.CompressorFinder',
-)
-
-
-#### BEGIN CELERY SETTINGS ####
-BROKER_URL = os.environ.get('REDIS_URL', None)
-CELERY_RESULT_BACKEND = 'django-db'
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'US/Eastern'
-#### END CELERY SETTINGS ####
+    STATICFILES_FINDERS = (
+        'django.contrib.staticfiles.finders.FileSystemFinder',
+        'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+        # other finders..
+        'compressor.finders.CompressorFinder',
+    )
 
 
-if not DEBUG: # production
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', None)
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', None)
-    AWS_STORAGE_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', None)
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    AWS_S3_REGION_NAME = 'us-east-1'
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
+    #### BEGIN CELERY SETTINGS ####
+    # Reverting to synchronous processing for now 
+    # BROKER_URL = os.environ.get('REDIS_URL', None)
+    # CELERY_RESULT_BACKEND = 'django-db'
+    # CELERY_ACCEPT_CONTENT = ['application/json']
+    # CELERY_TASK_SERIALIZER = 'json'
+    # CELERY_RESULT_SERIALIZER = 'json'
+    # CELERY_TIMEZONE = 'US/Eastern'
+    #### END CELERY SETTINGS ####
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-GOOGLE_DRIVE_FOLDER = os.path.join(MEDIA_ROOT, 'drive') if DEBUG else 'media/drive'
-GOOGLE_DRIVE_CREDENTIALS_JSON_FILE = os.path.join(BASE_DIR, 'drive', 'credentials.json')
-GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI = 'http://localhost:8000/drive/authenticate' if DEBUG else 'https://polydoc.xyz/drive/authenticate'
-GOOGLE_DRIVE_AUTHORIZATION_RESPONSE_URI = 'http://localhost:8000/profile' if DEBUG else 'https://polydoc.xyz/profile'
-# Only use heroku configuration if application currently running on heroku
-if 'APPLICATION_ON_HEROKU' in os.environ:
-    # Configure Django App for Heroku.
-    import django_heroku
-    django_heroku.settings(locals())
-    print('using heroku settings')
+    ### REDIS SETTINGS ###
+    # REDIS_URL = os.environ.get('REDIS_URL','')
+    # REDIS = redis.StrictRedis.from_url(REDIS_URL)
+    ###
+
+
+
+
+    if not DEBUG: # production
+        AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', None)
+        AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', None)
+        AWS_STORAGE_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', None)
+        AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+        AWS_S3_REGION_NAME = 'us-east-1'
+        DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # Default primary key field type
+    # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
+    DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+    GOOGLE_DRIVE_FOLDER = os.path.join(MEDIA_ROOT, 'drive') if DEBUG else 'media/drive'
+    if DEBUG:
+        # use file in dev
+        json_file = os.path.join(BASE_DIR, 'drive', 'credentials.json')
+        with open(json_file) as f:
+            GOOGLE_CREDENTIALS_JSON = dict(json.load(f))
+    else:
+        # use env in prod  
+        GOOGLE_CREDENTIALS_JSON = dict(json.loads(os.environ.get('GOOGLE_CREDENTIALS_JSON', '{}')))
+    GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI = 'http://localhost:8000/drive/authenticate' if DEBUG else 'https://polydoc.xyz/drive/authenticate'
+    GOOGLE_DRIVE_AUTHORIZATION_RESPONSE_URI = 'http://localhost:8000/dash' if DEBUG else 'https://polydoc.xyz/dash'
+    # Only use heroku configuration if application currently running on heroku
+    if 'APPLICATION_ON_HEROKU' in os.environ:
+        # Configure Django App for Heroku.
+        import django_heroku
+        # pass logging=False to prevent heroku from overriding logging config above
+        django_heroku.settings(locals(), logging=False)
+        logger.info('using heroku settings')
+except Exception as e:
+    logger.error(e)
 

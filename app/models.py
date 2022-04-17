@@ -6,18 +6,19 @@ from django.dispatch import receiver
 from pdf2image import convert_from_path, convert_from_bytes
 from django.core.files.storage import default_storage
 from .utils import FileUtility
-
+import logging 
+logger = logging.getLogger('Models')
 # Create your models here.
 def user_directory_path(instance, filename):
-    print(f'saving doc file to media/documents/{instance.user}/{filename}')
+    logger.info(f'saving doc file to media/documents/{instance.user}/{filename}')
     return f'documents/{instance.user}/{filename}' if settings.DEBUG else f'media/documents/{instance.user}/{filename}'
 
 def get_path_to_page_images_folder(document_object=None):
     """ Get the path to the folder containing all of the page images for a document. """
     futil = FileUtility()
-    print('getting path to page images folder')
+    logger.info('getting path to page images folder')
     document_location = futil.get_document_object_file_location(document_object=document_object)
-    print(f'document_location = {document_location}')
+    logger.info(f'document_location = {document_location}')
     return f'{document_location.split(".")[0]}'
 
 def page_image_folder_path(instance, filename):
@@ -26,8 +27,8 @@ def page_image_folder_path(instance, filename):
     this is where images corresponding to a given Page should be stored; one image per page;
     each image to be stored in a folder named after the corresponding Document
     """
-    print(f'inside page_image_folder_path(instance, filename)')
-    print(f'filename={filename}')
+    logger.info(f'inside page_image_folder_path(instance, filename)')
+    logger.info(f'filename={filename}')
     return f'{get_path_to_page_images_folder(document_object=instance.document)}/{filename}'
 
 class DocumentContainer(models.Model):
@@ -52,14 +53,14 @@ class Document(models.Model):
         except:
             # s3 compatible
             path = self.file.url.split('amazonaws.com/')[-1].split('?AWSAccessKeyId')[0] # contains creds; remove them
-        print(f'filepath = {path}')
+        logger.info(f'filepath = {path}')
         return path
 
     def get_filename(self):
         """ Get the base name of the associated file """
         filepath = self.get_filepath()
         filename = filepath.split('/')[-1]
-        print(f'filepath={filepath}, so filename={filename}')
+        logger.info(f'filepath={filepath}, so filename={filename}')
         return filename
 
     def create_page_images(self, document_path=""):
@@ -67,7 +68,7 @@ class Document(models.Model):
         Create a folder named after a document (without the extension;
         document_relative_path is the relatv"""
         if self.file:
-            print(f'self.file = true; document_path = {document_path}')
+            logger.info(f'self.file = true; document_path = {document_path}')
             # if you have saved a file
             try:
                 # works for local FS storage , not for S3
@@ -77,15 +78,15 @@ class Document(models.Model):
                         index=index,
                         notes=''
                     )
-                    print('saving page')
+                    logger.info('saving page')
                     new_page.save()
-                    print('saving page image')
+                    logger.info('saving page image')
                     new_page.image.save(f'{index}.jpg', image.fp)
-                    print('saved page image')
+                    logger.info('saved page image')
             except Exception as e:
-                print(e)
-                print("-"*60)
-                print('Retry page image generation with S3-compatible path')
+                logger.error(e)
+                logger.error("-"*60)
+                logger.error('Retry page image generation with S3-compatible path')
                 ### FIXME
                 file_byte_string = default_storage.open(document_path).read()
                 for index, image in enumerate(convert_from_bytes(file_byte_string, dpi=300, fmt="jpg")):
@@ -94,11 +95,11 @@ class Document(models.Model):
                         index=index,
                         notes=''
                     )
-                    print('saving page')
+                    logger.info('saving page')
                     new_page.save()
-                    print('saving page image')
+                    logger.info('saving page image')
                     new_page.image.save(f'{index}.jpg', image.fp)
-                    print('saved page image')
+                    logger.info('saved page image')
 
 
 @receiver(models.signals.post_delete, sender=Document)
@@ -108,10 +109,10 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     when corresponding `Document` object is deleted.
     """
     if instance.file:
-        print(f'removing document files & corresponding page image folder')
+        logger.info(f'removing document files & corresponding page image folder')
         futil = FileUtility()
         path = instance.get_filepath()
-        print(f'Path for doc={path}')
+        logger.info(f'Path for doc={path}')
         futil.remove_file(path=instance.get_filepath())
         # remove the folder with the same name (i.e. pages folder for document file)
         futil.remove_folder_recursive(get_path_to_page_images_folder(document_object=instance))
@@ -130,24 +131,13 @@ class Page(models.Model):
         except:
             # S3 compatible
             path = self.image.url.split('amazonaws.com/')[-1].split('?AWSAccessKeyId')[0] # contains creds; remove them
-        print(f'filepath = {path}')
+        logger.info(f'filepath = {path}')
         return path
 
     def get_filename(self):
         """ Get the base name of the associated file """
         filepath = self.get_filepath()
         filename = filepath.split('/')[-1]
-        print(f'filepath={filepath}, so filename={filename}')
+        logger.info(f'filepath={filepath}, so filename={filename}')
         return filename
 
-# Commenting this out for now; you really never do any page-level deletions.
-# This receiver was breaking the document post_delete signal. Pages and page folders
-# would delete but document would not.
-# @receiver(models.signals.post_delete, sender=Page)
-# def auto_delete_file_on_delete(sender, instance, **kwargs):
-#     """
-#     Deletes page/image file from filesystem
-#     when corresponding `Page` object is deleted.
-#     """
-#     if instance.image:
-#         FileUtility().remove_file(path=instance.get_filepath())

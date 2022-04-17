@@ -81,25 +81,60 @@ let importDriveFolderAsContainer = (folderId, folderName) => {
     .then((response) => response.json())
     .then((data) => {
       setTimeout(() => {
-        googleDriveImportLoadingScreen.hide();
+        location.href = "/dash";
       }, 3000);
-      ACTIVE_TASKS.push(data.task_id);
-      let progressUrl = `/celery-progress/${data.task_id}`;
-      console.log(`data.task_id=${data.task_id}; progressUrl=${progressUrl}`);
-      CeleryProgressBar.initProgressBar(progressUr, {
-        onSuccess: () => {
-          // when this import task completes, display notification
-          let notificationElem = document.createElement("li");
-          let notificationLinkElem = document.createElement("a");
-          notificationLinkElem.classList.add("dropdown-item");
-          notificationLinkElem.href = "/profile";
-          notificationElem.appendChild(notificationLinkElem);
-          document
-            .querySelector(".notifications-dropdown")
-            .appendChild(notificationElem);
-        },
+    });
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+  // active task list included in master template; this monitors progress of each
+  // task if any are present; this allows notification to populate in top nav
+  // if any of them complete
+  document.querySelectorAll("li.active-task-id").forEach((el, i) => {
+    console.log(`monitoring progress of ${el.dataset.taskId}`);
+    monitorProgress(el.dataset.taskId);
+  });
+
+  initTaskStatusPage(); // won't do anything if not on tasks.html page
+});
+
+let notifyUserTaskComplete = (data) => {
+  // data: {'state': 'SUCCESS', 'complete': True, 'success': True, 'progress': {'pending': False, 'current': 100, 'total': 100, 'percent': 100}, 'result': 'success'}
+  document.querySelector(".notification-description").textContent = 1; //data.result;
+  document.querySelector(".notification-badge").classList.remove("d-none");
+};
+
+let initTaskStatusPage = () => {
+  // initialize all of the progress bars on the tasks.html (task status view) page
+  document
+    .querySelectorAll(".task-status-page .tasks-accordion .task-id")
+    .forEach((el, i) => {
+      let task_id = el.dataset.taskId;
+      // create a progress bar for a given task id on the task-status view page
+      CeleryProgressBar.initProgressBar(`/task-status/${task_id}`, {
+        pollInterval: 1500,
+        progressBarId: `progress-bar-${task_id}`,
+        progressBarMessageId: `progress-bar-message-${task_id}`,
       });
     });
+};
+
+let monitorProgress = (task_id) => {
+  let progressUrl = `/task-status/${task_id}`;
+  let complete = false;
+  let monitorIntervalId = setInterval(() => {
+    fetch(progressUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+        // structure: {'state': 'SUCCESS', 'complete': True, 'success': True, 'progress': {'pending': False, 'current': 100, 'total': 100, 'percent': 100}, 'result': 'success'}
+        if (data.complete) {
+          notifyUserTaskComplete(data);
+          // stop monitoring; it's done
+          clearInterval(monitorIntervalId);
+        }
+      });
+  }, 1500);
 };
 
 let hideLoaderAfterMillisecondDelay = (delay) => {
@@ -213,15 +248,21 @@ document.onreadystatechange = function () {
 };
 
 let prepareTooltips = () => {
-  document.querySelectorAll("a[data-bs-toggle]").forEach((el, index) => {
-    let tooltip = new bootstrap.Tooltip(el);
-  });
-  document.querySelectorAll("button[data-bs-toggle]").forEach((el, index) => {
-    let tooltip = new bootstrap.Tooltip(el);
-  });
-  document.querySelectorAll("div[data-bs-toggle]").forEach((el, index) => {
-    let tooltip = new bootstrap.Tooltip(el);
-  });
+  document
+    .querySelectorAll("a[data-bs-toggle='tooltip']")
+    .forEach((el, index) => {
+      let tooltip = new bootstrap.Tooltip(el);
+    });
+  document
+    .querySelectorAll("button[data-bs-toggle='tooltip']")
+    .forEach((el, index) => {
+      let tooltip = new bootstrap.Tooltip(el);
+    });
+  document
+    .querySelectorAll("div[data-bs-toggle='tooltip']")
+    .forEach((el, index) => {
+      let tooltip = new bootstrap.Tooltip(el);
+    });
 };
 let updateCurrentPageForAllDocs = (newPageIndex) => {
   document.querySelectorAll(".multiview-document").forEach((el, index) => {
@@ -245,7 +286,7 @@ let updateActiveTableRow = (currentPageIndex) => {
       trDocPage.classList.add("table-active");
       let notes = trDocPage.querySelector("textarea");
       notes.focus();
-      notes.scrollIntoView();
+      //notes.scrollIntoView(); bad UX
     } else {
       trDocPage.classList.remove("table-active");
     }

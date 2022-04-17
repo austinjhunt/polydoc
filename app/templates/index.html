@@ -1,15 +1,20 @@
-{% extends 'master.html' %}
-{% block content %}
+{% extends 'master.html' %} {% block content %}
 <div class="container p-5">
-    <figure class="d-flex bg-dark p-4">
-         <div class="text-center p-4 text-light">
-            <h1 class="text-3xl">Welcome to PolyDoc.</h1>
-            <p class="text-lg font-medium">
-                Are you looking for an online solution for viewing and managing many documents simultaneously, all in a single view? Do you use Google Drive for storing your documents?
-            </p>
-            <p class="text-xl ">You've found the right solution.</p>
-            <a  href="{% if user.is_authenticated %} {% url 'profile' %}  {% else %} {% url 'login' %} {% endif %}"  class="btn btn-primary p-3"  >Get Started</a>
-        </div>
-      </figure>
+  <figure class="d-flex bg-dark p-4">
+    <div class="text-center p-4 text-light">
+      <h1 class="text-3xl">Welcome to PolyDoc.</h1>
+      <p class="text-lg font-medium">
+        Are you looking for an online solution for viewing and managing many
+        documents simultaneously, all in a single view? Do you use Google Drive
+        for storing your documents?
+      </p>
+      <p class="text-xl">You've found the right solution.</p>
+      <a
+        href="{% if user.is_authenticated %} {% url 'dash' %}  {% else %} {% url 'login' %} {% endif %}"
+        class="btn btn-primary p-3"
+        >Get Started</a
+      >
+    </div>
+  </figure>
 </div>
 {% endblock %}

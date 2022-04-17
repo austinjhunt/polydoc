@@ -1,5 +1,5 @@
 
-from django.urls import path
+from django.urls import path, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
@@ -10,7 +10,7 @@ urlpatterns = [
     path('login', views.LoginView.as_view(), name='login'),
     path('register', views.RegisterView.as_view(), name='register'),
     path('logout', views.LogoutView.as_view(), name='logout'),
-    path('profile', views.ProfileView.as_view(), name='profile'),
+    path('dash', views.DashboardView.as_view(), name='dash'),
     path('drive', views.DriveView.as_view(), name='drive'),
     path('drive/authenticate', views.DriveCallbackView.as_view(), name='auth'),
 
@@ -37,9 +37,9 @@ urlpatterns = [
     # Multiview functionality
     path('multiview/<slug:container_id>', views.MultiView.as_view(), name='multiview'),
 
-    # Celery & Progress monitoring
-    path('task-status/view', views.TaskStatusView.as_view(), name='task-status-view'),
-    path('task-status/<slug:task_id>', views.get_progress, name='task_status'),
+    # Celery & Progress monitoring; not used, reverting to synchronous for now 
+    # path('task-status/view', views.TaskStatusView.as_view(), name='task-status-view'),
+    # path('task-status/<slug:task_id>', views.get_progress, name='task_status'),
 
     # POST endpoint requires trailing slash for ajax call
     path('toggle-theme/', views.ToggleThemeView.as_view(), name='toggle-theme'),

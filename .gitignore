@@ -5,3 +5,4 @@ media/documents
 media/drive
 .env
 *.log
+drive/credentials.json

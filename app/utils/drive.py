@@ -12,16 +12,18 @@ import os
 import json
 import requests
 import logging
+
+
 # don't make this a method of the DriveAPI class because
 # self needs to refer to the task, not the DriveAPI instance
 class DriveAPI:
 
-    def __init__(self, request=None, user_id=None, verbose=False):
-        self.setup_logging(verbose=verbose)
+    def __init__(self, request=None, user_id=None):
+        self.setup_logging()
         self.connected = False
         self.service = None
         self.secrets_from_json = None
-        self._init_secrets_from_json()
+        self._init_secrets()
         self.code = None
         if request:
             self.request = request
@@ -30,55 +32,35 @@ class DriveAPI:
             self.request = None
             self.user_id = user_id
 
-        self.flow = None
+        self.flow = None 
         self.token_folder = f'{settings.GOOGLE_DRIVE_FOLDER}/tokens'
-        self._ensure_folder_exists(self.token_folder)
         self.access_token_file = f'{self.token_folder}/user-{self.user_id}-access.pickle'
         self.scopes = ['https://www.googleapis.com/auth/drive']
         # Access token for drive resource access; to be stored in access_token_file 
         self.creds = None
-        if os.path.exists(self.access_token_file):
+        if default_storage.exists(self.access_token_file):
             self.load_creds_from_file()
 
-    def setup_logging(self, verbose):
+    def setup_logging(self):
         """ set up self.logger for producer logging """
         self.logger = logging.getLogger('DriveAPI')
-        formatter = logging.Formatter('%(prefix)s - %(message)s')
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-        self.prefix = {'prefix': 'DriveAPI'}
-        self.logger.addHandler(handler)
-        self.logger = logging.LoggerAdapter(self.logger, self.prefix )
-        if verbose:
-            self.logger.setLevel(logging.DEBUG)
-            self.logger.debug('Debug mode enabled', extra=self.prefix )
-        else:
-            self.logger.setLevel(logging.INFO)
 
     def debug(self, msg):
-        self.logger.debug(msg, extra=self.prefix)
+        self.logger.debug(msg)
 
     def info(self, msg):
-        self.logger.info(msg, extra=self.prefix)
+        self.logger.info(msg)
 
     def error(self, msg):
-        self.logger.error(msg, extra=self.prefix)
+        self.logger.error(msg)
 
-    def _init_secrets_from_json(self):
-        self.info(
-            f"Initializing OAuth creds from JSON file "
-            f"{settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE}"
-            )
+    def _init_secrets(self):
+        """ In prod, uses GOOGLE_CREDENTIALS_JSON environment var content; in dev, uses drive/credentials.json """
+        self.info('Initializing OAuth creds')
         try:
-            with open(settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE, 'r') as f:
-                self.secrets_from_json = dict(json.load(f))['web']
+            self.secrets_from_json = settings.GOOGLE_CREDENTIALS_JSON
         except Exception as e:
             self.error(e)
-
-    def _ensure_folder_exists(self, path):
-        """ Given a path to a folder, ensure it exists"""
-        if not os.path.exists(path):
-            os.makedirs(path)
 
     def refresh(self):
         """ Refresh drive authorization for user """
@@ -92,7 +74,7 @@ class DriveAPI:
             if not self.creds:
                 self.error("Creds do not exist")
             if self.creds and not self.creds.expired:
-                self.error("Creds exist and are expired")
+                self.error("Creds exist and are not expired")
             if self.creds and not self.creds.refresh_token:
                 self.error("Creds exist and refresh_token missing")
             self.error("Not refreshing")
@@ -106,8 +88,9 @@ class DriveAPI:
             # redirects user to google's auth endpoint which redirects to login
             # they login and then are redirected back to this app's auth view with a code
             # which can be used one time to obtain a token
-            self.flow = InstalledAppFlow.from_client_secrets_file(
-                settings.GOOGLE_DRIVE_CREDENTIALS_JSON_FILE, self.scopes,
+            self.flow = InstalledAppFlow.from_client_config(
+                client_config=settings.GOOGLE_CREDENTIALS_JSON,
+                scopes=self.scopes,
                 redirect_uri=settings.GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI,
                 )
         else:
@@ -122,9 +105,9 @@ class DriveAPI:
                 self.creds = Credentials(
                     token=response['access_token'],
                     refresh_token=refresh_token,
-                    token_uri=self.secrets_from_json['token_uri'],
-                    client_id=self.secrets_from_json['client_id'],
-                    client_secret=self.secrets_from_json['client_secret'],
+                    token_uri=self.secrets_from_json['web']['token_uri'],
+                    client_id=self.secrets_from_json['web']['client_id'],
+                    client_secret=self.secrets_from_json['web']['client_secret'],
                     scopes=self.scopes
                     )
                 self.save_creds_to_file()
@@ -135,15 +118,15 @@ class DriveAPI:
     def fetch_token(self, code=None, ):
         """ Custom POST request to fetch a token from token endpoint in Google auth """
         self.info('Fetching token from Google auth token_uri')
-        token_endpoint = self.secrets_from_json['token_uri']
+        token_endpoint = self.secrets_from_json['web']['token_uri']
         data = {
             'code': code,
             'redirect_uri': settings.GOOGLE_DRIVE_AUTHENTICATE_REDIRECT_URI,
             'grant_type': 'authorization_code'
         }
         auth = (
-            self.secrets_from_json['client_id'],
-            self.secrets_from_json['client_secret'],
+            self.secrets_from_json['web']['client_id'],
+            self.secrets_from_json['web']['client_secret'],
         )
         try:
             response = requests.post(token_endpoint, data=data, auth=auth).json()
@@ -164,7 +147,7 @@ class DriveAPI:
 
     def load_creds_from_file(self):
         """ Read the creds from the file and store it in the variable self.creds"""
-        if os.path.exists(self.access_token_file):
+        if default_storage.exists(self.access_token_file):
             try:
                 self.info(f"Reading creds from {self.access_token_file}")
                 with default_storage.open(self.access_token_file, 'rb') as token:
@@ -306,3 +289,78 @@ class DriveAPI:
             if page_token is None:
                 break
         return folder_list
+    
+    def import_drive_folder(self, userid, username, folder_id, folder_name):
+        from ..models import DocumentContainer, Document
+        from .fileutility import FileUtility
+        self.info('importing drive folder')
+        if not folder_name or not folder_id:
+            self.error('drive folder id or name not provided')
+            return 'drive folder id or name not provided'
+        if not self.has_valid_creds():
+            self.refresh()
+        if not self.service_connected():
+            self.connect_drive_service()
+        try:
+            self.info(f'getting files in selected folder {folder_id}')
+            files_in_selected_folder = self.get_files_in_folder(folder_id=folder_id)
+            num_files = len(files_in_selected_folder)
+            self.info(f'{num_files} total files in selected folder')
+            # used as site-relative href value on front-end
+            relative_folder_path = f'/media/documents/{username}'
+            futil = FileUtility()
+            full_folder_path = futil.generate_path_to_user_document_folder(username=username)
+            # create a document container with same name as folder
+            self.info(f'creating document container')
+            document_container = DocumentContainer(
+                name=folder_name,
+                user_id=userid
+            )
+            document_container.save()
+            self.info(f'created document container')
+            for i, f in enumerate(files_in_selected_folder):
+                self.info(f'updating progress on progress_recorder with current={i+1}, total={num_files}')
+                _fname = f.get('name') + ".pdf"
+                clean_filename = futil.clean_filename(filename=_fname)
+                clean_filepath = f'{full_folder_path}/{clean_filename}'
+                # Download file as a pdf from drive
+                download_success = self.download_file_as_pdf(
+                    file_id=f.get('id'),
+                    parent_folder_path=full_folder_path,
+                    file_name=clean_filename)
+
+                if download_success:
+                    self.info('download successful; creating doc')
+                    new_doc = Document(
+                        notes='',
+                        title=clean_filename,
+                        location=f'{relative_folder_path}/{clean_filename}',
+                        user_id=userid
+                    )
+                    self.info('created doc')
+                    # associate saved file with saved object
+                    self.info(f'opening clean_filepath={clean_filepath}')
+                    with default_storage.open(clean_filepath, 'rb') as file:
+                        # The default behaviour of Django's Storage class
+                        # is to append a series of random characters to
+                        # the end of the filename when the filename already exists
+                        # so delete original file after calling save()
+                        self.info(f'calling new_doc.file.save({clean_filename}, file)')
+                        new_doc.file.save(clean_filename, file)
+                    self.info(f'removing file {clean_filepath} (extra file)')
+                    futil.remove_file(clean_filepath)
+                    # Update the clean_filename and clean_filepath values to reflect the rename
+                    clean_filename = new_doc.get_filename()
+                    clean_filepath = f'{full_folder_path}/{clean_filename}'
+                    self.info(f'saving doc')
+                    new_doc.save()
+                    new_doc.containers.add(document_container.id)
+                    new_doc.save()
+                    self.info(f'creating page images(document_path={clean_filepath}')
+                    new_doc.create_page_images(document_path=clean_filepath)
+            result = 'Success'
+        except Exception as e:
+            self.error(e)
+            result = f'failed: {e}'
+        return result
+

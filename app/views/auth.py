@@ -7,7 +7,8 @@ from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from ..utils.drive import DriveAPI
-
+import logging 
+logger = logging.getLogger('PolyDoc')
 class LogoutView(LoginRequiredMixin, View):
     """ Logout """
     def get(self, request):
@@ -16,11 +17,11 @@ class LogoutView(LoginRequiredMixin, View):
             drive = DriveAPI(request=request)
             drive.clear_user_creds()
         except Exception as e:
-            print(e)
+            logger.error(e)
         try:
             logout(request)
         except Exception as e:
-            print(e)
+            logger.error(e)
         return redirect('home')
 
 class RegisterView(FormView):
@@ -86,8 +87,8 @@ class LoginView(FormView):
             )
 
 
-class ProfileView(LoginRequiredMixin, FormView):
-    """ Profile page view """
+class DashboardView(LoginRequiredMixin, FormView):
+    """ Dashboard page view """
     form_class = DocumentUploadForm
     def get(self, request):
         user_document_containers = DocumentContainer.objects.filter(
@@ -112,7 +113,7 @@ class ProfileView(LoginRequiredMixin, FormView):
         # Called after POSTED data has been validated
         files = form.files  # MultiValueDict with key "files"
         files = files.getlist('file')
-        print(files)
+        logger.info(f'Files={files}')
         return render(
             request=self.request,
             template_name='dashboard.html',

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.files.storage import default_storage
-
+import logging 
+logger = logging.getLogger('FileUtility')
 class FileUtility:
     def __init__(self):
         self.s3_storage_active = (not settings.DEBUG)
@@ -35,26 +36,27 @@ class FileUtility:
 
     def remove_folder_recursive(self, folder_path):
         """ recursively remove a folder given its path """
-        print(f'Recursively removing folder {folder_path}')
+        logger.info(f'Recursively removing folder {folder_path}')
         try:
             dirs, files = default_storage.listdir(folder_path)
             if not folder_path.endswith('/'):
                 folder_path = f'{folder_path}/'
             for file in files:
                 filepath = f'{folder_path}{file}'
-                print(f'deleting {filepath}')
+                logger.info(f'deleting {filepath}')
                 default_storage.delete(filepath)
             for dir in dirs:
                 new_dir = f'{folder_path}{dir}/'
                 self.remove_folder_recursive(new_dir)
             self.remove_file(folder_path)
         except FileNotFoundError as e:
-            print(f'File not found. Not deleting {folder_path}')
+            logger.error(f'File not found. Not deleting {folder_path}')
 
 
     def remove_file(self, path):
         """ remove a file """
         try:
+            logger.info(f'Removing file {path}')
             default_storage.delete(path)
         except Exception as e:
-            print(e)
+            logger.error(e)
