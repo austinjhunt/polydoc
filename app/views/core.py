@@ -44,3 +44,11 @@ class MultiView(LoginRequiredMixin, View):
                 'documents': docs,
             }
         )
+
+
+class PrivacyPolicyView(View): 
+    def get(self, request):
+        return render(
+            request=request,
+            template_name='privacypolicy.html',
+        )

@@ -40,6 +40,8 @@ urlpatterns = [
     # path('task-status/view', views.TaskStatusView.as_view(), name='task-status-view'),
     # path('task-status/<slug:task_id>', views.get_progress, name='task_status'),
 
+    path('privacy-policy', views.PrivacyPolicyView.as_view(), name='privacy-policy'),
+
     # POST endpoint requires trailing slash for ajax call
     path('toggle-theme/', views.ToggleThemeView.as_view(), name='toggle-theme'),
     path('page-notes/<slug:pk>/', views.PageNotesEditView.as_view(), name='edit-page-notes')
