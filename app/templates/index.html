@@ -1,17 +1,17 @@
 {% extends 'master.html' %} {% block content %}
-<div class="container p-5">
-  <figure class="d-flex bg-dark p-4">
-    <div class="text-center p-4 text-light">
-      <h1 class="text-3xl">Welcome to PolyDoc.</h1>
-      <p class="text-lg font-medium">
-        Are you looking for an online solution for viewing and managing many
-        documents simultaneously, all in a single view? Do you use Google Drive
-        for storing your documents?
-      </p>
-      <p class="text-xl">You've found the right solution.</p>
+{% load static %}
+<div class="container p-5 text-center">
+  <figure class="text-center bg-dark p-2 welcome-banner rounded shadow-lg w-75 m-auto ">
+    <div class="text-center p-4 text-light ">
+      <h2 class="fw-lighter">Welcome to PolyDoc.</h2>
+      <div class="text-center my-3">
+        <img src="{% static 'img/logo.png'%}" alt="polydoc logo">
+      </div>
+      <h3 class="fw-lighter">The one-stop shop for simultaneous document review.</h3>
+      <h4 class="fw-lighter mb-4">Integrates with Google Drive.</h4>
       <a
         href="{% if user.is_authenticated %} {% url 'dash' %}  {% else %} {% url 'login' %} {% endif %}"
-        class="btn btn-primary p-3"
+        class="btn btn-primary p-3 fw-light"
         >Get Started</a
       >
     </div>
