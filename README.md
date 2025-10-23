@@ -13,39 +13,46 @@ The following paths have been added to the URLs (both likely temporary) -
 ```
 cd dev
 git clone https://github.com/austinjhunt/polydoc.git
-```
 
-3. Navigate to the repo and create a Python 3.8 virtual environment to isolate the dependencies for this project.
+# polydoc
 
-```
-cd polydoc
-python3.8 -m venv venv
-```
+polydoc is a compact Django app for uploading, importing, viewing, annotating, grading and exporting documents (PDFs/images). It provides user auth, a dashboard, Google Drive import/authorization, page-level notes, grading and multi-view document browsing.
 
-4. Activate the virtual environment and install the project requirements.
+Key features
+- Document containers (group documents together), create/update/delete, clear and export (summary & detail)
+- Upload/import documents (Google Drive integration)
+- Document pages viewer with page-level notes and in-place editing
+- Document grading and notes saving
+- Multiview to browse multiple documents/pages side-by-side
+- User auth (login/register/logout), dashboard, privacy policy, and theme toggle
 
-```
-source venv/bin/activate # (or source venv/Scripts/activate if you're on Windows)
-pip install -r requirements.txt
-```
+Important routes (high-level)
+- /               -> Home
+- /login, /register, /logout
+- /dash           -> Dashboard
+- /drive          -> Drive UI and /drive/authenticate for Drive callback
+- /documentcontainer/*  -> create, import-from-drive, update, delete, clear, export
+- /document/*     -> create, delete, pages, save-notes, grade, export, clear
+- /multiview/<container_id>
+- /toggle-theme/   -> AJAX POST to toggle user theme
+- /page-notes/<pk>/ -> edit page notes (POST)
 
-5. All Python dependencies are now installed. You should be able to run the development server with the following command:
+Where things live
+- App templates: `app/templates/` (index.html, dashboard.html, document_viewer.html, multiview2.html, etc.)
+- Static assets: `app/static/` and project `staticfiles/`
+- Drive credentials: `drive/credentials.json`
 
-```
-python manage.py runserver
-```
+Quick start (local)
+1. Create and activate a Python virtualenv (3.8+ recommended).
+2. pip install -r requirements.txt
+3. python manage.py migrate
+4. python manage.py runserver
+5. Open http://localhost:8000
 
-6. The application should now be running on port 8000 of localhost. Try opening [http://localhost:8000](http://localhost:8000) in a browser.
+Notes
+- The app uses pdf2image (Poppler) for rendering PDFs — install Poppler on hosts (or include it in the build for production).
+- Google Drive integration requires valid credentials and the Drive token store (see `drive/credentials.json` and `media/drive/tokens/`).
+- Run migrations before importing or starting features that reference models.
 
-## Notes
-
-- Needed to set multiple buildpacks on Heroku to get the PDF2Image library to work. It depends on Poppler, which must be installed and in PATH. Executed the following from Heroku CLI for the library to work in Production. [Documented here](https://stackoverflow.com/questions/63413122/error-while-trying-to-use-pdf2image-on-heroku-libpng12-so-0-cannot-open-share)
-
-```
-heroku buildpacks:set heroku/python --app poly-doc
-heroku buildpacks:add --index 1 heroku-community/apt --app poly-doc
-heroku buildpacks:add --index 1 https://github.com/heroku/heroku-buildpack-apt --app poly-doc
-```
-
-- Then needed to add an Aptfile to root containing `popplerutils` and `libpng-dev`
-- For dev, just needed to install Poppler, e.g. in Ubuntu `sudo apt install poppler-utils`
+License / Contributing
+- See the project root for contribution notes and dependencies.
